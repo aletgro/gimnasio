@@ -1,0 +1,15 @@
+{
+  "name": "Debian Minimalista Open Source",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+  "remoteUser": "dev",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Claude Code
+        "anthropic.claude-code"
+      ]
+    }
+  }
+}
