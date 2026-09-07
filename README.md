@@ -5,7 +5,7 @@ App para el celular (PWA) para registrar el entrenamiento: rutinas, pesos, reps,
 ## Qué hace
 
 - **Hoy**: sugiere la próxima rutina (entre las activas, la que hace más tiempo no hacés), muestra la cadencia (esta semana, últimas 4, semanas seguidas) y las últimas sesiones.
-- **Sesión**: te va diciendo el ejercicio, con el rango de reps y lo que hiciste la última vez (peso × reps y sensación por serie). Anotás peso, reps y sensación con botones grandes. Al guardar arranca el descanso con cuenta regresiva, vibración y sonido, y te muestra el siguiente ejercicio.
+- **Sesión**: te va diciendo el ejercicio, con el rango de reps y lo que hiciste la última vez (peso × reps y sensación por serie). Anotás peso, reps y sensación con botones grandes. Al guardar arranca el descanso con cuenta regresiva, vibración y sonido, y te muestra el siguiente ejercicio. Si el aparato está ocupado, **Hacer después** pasa ese ejercicio detrás del que sigue (en series seguidas, todas las series que le quedan): hacés el otro y la app te vuelve a traer el pospuesto. Se puede tocar varias veces para seguir corriéndolo, tanto en la pantalla del ejercicio como durante el descanso.
 - **Progresión**: cuando dos sesiones seguidas completás el tope del rango en todas las series con RIR ≤ 2, te avisa que subas la carga (doble progresión).
 - **Rutinas**: editor de bloques (circuito/superset o series) con ejercicios, rangos, carga objetivo y descansos. Vienen cargadas tus rutinas de Fase 1, Fase 2 (Día 1 y Día 2), una alternativa full body A/B para 3 días y la Fase 3 de 4 días (Upper A / Lower A / Upper B / Lower B). Si la app ya tenía datos, las nuevas aparecen con **Datos → Restaurar rutinas de ejemplo**.
 - **Calendario**: días entrenados, marcar días a mano, días por semana.

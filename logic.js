@@ -82,8 +82,27 @@ window.GymLogic = (function () {
       }
     });
     steps.forEach((s, i) => { s.index = i; });
-    if (steps.length) steps[steps.length - 1].restAfter = 0;
     return steps;
+  }
+  /* ---- Posponer: el ejercicio de la posición idx pasa a hacerse después del que le sigue.
+     Se mueve el tramo de series seguidas del ejercicio actual (desde idx) detrás del tramo del ejercicio siguiente:
+     en un circuito es una serie de cada uno; en series seguidas, todas las que quedan de ese ejercicio.
+     Devuelve { queue, map (posición vieja → nueva), moved, ahead, movedCount, aheadCount } o null si no hay otro ejercicio después. */
+  function postponeStep(queue, idx) {
+    if (!queue || idx < 0 || idx >= queue.length) return null;
+    const same = (a, b) => a.block === b.block && a.ex === b.ex;
+    let b = idx; while (b < queue.length && same(queue[b], queue[idx])) b++;
+    if (b >= queue.length) return null;
+    let c = b; while (c < queue.length && same(queue[c], queue[b])) c++;
+    const order = [];
+    for (let i = 0; i < idx; i++) order.push(i);
+    for (let i = b; i < c; i++) order.push(i);
+    for (let i = idx; i < b; i++) order.push(i);
+    for (let i = c; i < queue.length; i++) order.push(i);
+    const map = {};
+    order.forEach((old, i) => { map[old] = i; });
+    const next = order.map((old, i) => Object.assign({}, queue[old], { index: i }));
+    return { queue: next, map, moved: queue[idx], ahead: queue[b], movedCount: b - idx, aheadCount: c - b };
   }
   function routineSummary(routine) {
     const q = buildQueue(routine);
@@ -160,7 +179,7 @@ window.GymLogic = (function () {
 
   const api = { FEELS, feel, slug, uid, clone, dateStr, parseDate, addDays, startOfWeek, daysBetween, DAYS, DAYS_SHORT, MONTHS,
     fmtDateLong, fmtDateShort, relDate, fmtTime, fmtNum, fmtLoad, unitLabel, fmtReps, fmtSet, fmtSecs, fmtDuration, rangeLabel,
-    buildQueue, routineSummary, sortSessions, exerciseHistory, progressionHint, suggestNext, lastSessionOf, stats };
+    buildQueue, postponeStep, routineSummary, sortSessions, exerciseHistory, progressionHint, suggestNext, lastSessionOf, stats };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   return api;
 })();

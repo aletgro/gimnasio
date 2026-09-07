@@ -395,7 +395,7 @@
     let html = '<div class="session">' + sessionBar('Serie ' + (live.idx + 1) + ' de ' + live.queue.length) + progressBar();
     html += '<div><div class="ex-block">' + esc(block.name) + ' · ' + esc(whereLabel(step)) + '</div><h2 class="ex-name">' + esc(ex.name) + '</h2>' +
       '<div class="ex-meta">' + (ex.note ? '<span>' + esc(ex.note) + '</span>' : '') + '<span>' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + '</span>' +
-      (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div></div>';
+      (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter && live.idx < live.queue.length - 1 ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div></div>';
     html += '<div class="card last"><div class="card-head"><span class="eyebrow">Última vez' + (hist[0] ? ' · ' + esc(L.relDate(hist[0].date, today())) : '') + '</span>' +
       (hist[1] ? '<span class="small muted">antes: ' + hist[1].sets.map(s => esc(L.fmtSet(s))).join(', ') + '</span>' : '') + '</div>';
     if (hist[0]) html += '<div class="sets">' + hist[0].sets.map(s => setChip(s)).join('') + '</div><div class="small muted">' + summarizeFeel(hist[0].sets) + '</div>';
@@ -410,7 +410,8 @@
     html += '<div class="field"><label>¿Cómo se sintió?</label><div class="feels">' + L.FEELS.map(f => '<button class="feel ' + f.cls + (d.rir === f.rir ? ' on' : '') + '" data-act="feel" data-rir="' + f.rir + '" title="' + esc(f.hint) + '"><span class="e">' + f.emoji + '</span><span>' + f.label + '</span></button>').join('') + '</div></div>';
     html += '</div>';
     html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="saveSet">Guardar serie</button>' +
-      '<div class="actions"><button class="btn sm" data-act="prevStep"' + (live.idx === 0 ? ' disabled' : '') + '>‹ Anterior</button><button class="btn sm" data-act="skipStep">Saltar</button><button class="btn sm ghost" data-act="finishEarly">Terminar</button></div></div>';
+      '<div class="grid2"><button class="btn sm" data-act="prevStep"' + (live.idx === 0 ? ' disabled' : '') + '>‹ Anterior</button><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Hacer después ↷</button>' +
+      '<button class="btn sm" data-act="skipStep">Saltar</button><button class="btn sm ghost" data-act="finishEarly">Terminar</button></div></div>';
     return html + '</div>';
   }
   function renderRest() {
@@ -424,7 +425,8 @@
     html += '<div class="next"><span class="eyebrow">Siguiente · ' + esc(block.name) + ' · ' + esc(whereLabel(nextStep)) + '</span><div class="nm">' + esc(ex.name) + '</div>' +
       '<div class="muted">' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + (ex.note ? ' · ' + esc(ex.note) : '') + '</div>' +
       (todayLast ? '<div class="sets"><span class="small muted">hoy:</span>' + setChip(todayLast, 'today') + '</div>' : '') +
-      (hist[0] ? '<div class="sets"><span class="small muted">última vez:</span>' + hist[0].sets.map(s => setChip(s)).join('') + '</div>' : (todayLast ? '' : '<div class="small muted">primera vez</div>')) + '</div>';
+      (hist[0] ? '<div class="sets"><span class="small muted">última vez:</span>' + hist[0].sets.map(s => setChip(s)).join('') + '</div>' : (todayLast ? '' : '<div class="small muted">primera vez</div>')) +
+      '<div class="actions" style="margin-top:8px"><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Hacer después ↷</button></div></div>';
     return html + '</div>';
   }
   function renderSummary() {
@@ -464,6 +466,21 @@
     if (!live.skipped.includes(live.idx)) live.skipped.push(live.idx);
     live.sets = live.sets.filter(s => s.stepIndex !== live.idx);
     advance(0);
+  }
+  /* Hacer después: el ejercicio actual (o lo que queda de sus series) pasa detrás del que sigue; sirve cuando el aparato está ocupado.
+     Como las series anotadas apuntan a la posición en la cola, se reindexan con el mapa que devuelve la lógica. */
+  function postponeStep() {
+    const r = L.postponeStep(live.queue, live.idx);
+    if (!r) { toast('No hay otro ejercicio después de este'); return; }
+    const remap = i => (r.map[i] != null ? r.map[i] : i);
+    live.queue = r.queue;
+    live.sets.forEach(s => { s.stepIndex = remap(s.stepIndex); });
+    live.skipped = live.skipped.map(remap);
+    live.draft = null; live.sw = null;
+    if (live.phase === 'rest' && live.rest) live.rest.spoken = false;
+    persistLive(); render();
+    const nm = (step, n) => stepExercise(step).name + (n > 1 ? ' (' + n + ' series)' : '');
+    toast('Ahora: ' + nm(r.ahead, r.aheadCount) + ' · después: ' + nm(r.moved, r.movedCount), 3200);
   }
   function prevStep() { if (live.idx > 0) { live.idx--; live.phase = 'exercise'; live.rest = null; live.draft = null; live.sw = null; persistLive(); render(); } }
   function endRest() { if (!live) return; live.phase = 'exercise'; live.rest = null; persistLive(); render(); }
@@ -566,7 +583,7 @@
       inp.value = v; dr[d.f] = v; persistLive();
     },
     feel: d => { const dr = ensureDraft(); dr.rir = dr.rir === +d.rir ? null : +d.rir; persistLive(); $app.querySelectorAll('.feel').forEach(b => b.classList.toggle('on', +b.dataset.rir === dr.rir)); },
-    saveSet: saveSet, skipStep: skipStep, prevStep: prevStep,
+    saveSet: saveSet, skipStep: skipStep, postponeStep: postponeStep, prevStep: prevStep,
     finishEarly: () => { live.phase = 'summary'; live.rest = null; live.sw = null; persistLive(); render(); },
     backToExercises: () => { live.phase = 'exercise'; if (live.idx >= live.queue.length) live.idx = live.queue.length - 1; live.draft = null; persistLive(); render(); },
     restAdd: d => { live.rest.endAt += (+d.s) * 1000; live.rest.fired = false; persistLive(); tickRest(); },
