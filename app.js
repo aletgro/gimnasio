@@ -27,7 +27,14 @@
     return d;
   }
   function persist(d) { try { localStorage.setItem(KEY, JSON.stringify(d || data)); } catch (e) { toast('No se pudo guardar (almacenamiento lleno o bloqueado)'); } }
-  function loadLive() { try { return JSON.parse(localStorage.getItem(LIVE) || 'null'); } catch (e) { return null; } }
+  function loadLive() {
+    try {
+      const l = JSON.parse(localStorage.getItem(LIVE) || 'null');
+      if (l && l.phase === 'rest') l.phase = 'exercise'; // versiones anteriores tenían una pantalla de descanso aparte
+      if (l && l.sw && l.sw.total == null) l.sw = null; // cronómetro viejo, reemplazado por la cuenta regresiva
+      return l;
+    } catch (e) { return null; }
+  }
   function persistLive() { try { if (live) localStorage.setItem(LIVE, JSON.stringify(live)); else localStorage.removeItem(LIVE); } catch (e) { /* ignorar */ } }
 
   let data = load();
@@ -200,7 +207,7 @@
     const chk = (key, label) => '<label class="check"><input type="checkbox" data-setting="' + key + '" ' + (s[key] ? 'checked' : '') + '> ' + label + '</label>';
     let html = '<div class="screen">' + topbar('Datos');
     html += '<div class="card"><div class="eyebrow">Preferencias</div>' +
-      chk('sound', 'Sonido al terminar el descanso') + chk('vibrate', 'Vibración') + chk('voice', 'Voz: anunciar el próximo ejercicio') + chk('wakeLock', 'Pantalla encendida durante la sesión') +
+      chk('sound', 'Sonido al terminar el descanso o la cuenta regresiva') + chk('vibrate', 'Vibración') + chk('voice', 'Voz: anunciar el próximo ejercicio') + chk('wakeLock', 'Pantalla encendida durante la sesión') +
       '<div class="field"><label for="theme">Tema</label><select class="input" id="theme" data-setting="theme">' +
       [['system', 'Según el sistema'], ['dark', 'Oscuro'], ['light', 'Claro']].map(([v, l]) => '<option value="' + v + '"' + (s.theme === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div></div>';
     html += '<div class="card"><div class="eyebrow">Copia de seguridad</div><p class="small muted">Todo se guarda en este teléfono. Exportá cada tanto para no perder nada y para sacar estadísticas.</p>' +
@@ -370,7 +377,6 @@
   function renderSession() {
     if (live.phase === 'start') return renderStart();
     if (live.phase === 'summary') return renderSummary();
-    if (live.phase === 'rest' && live.rest && currentStep()) return renderRest();
     if (!currentStep()) { live.phase = 'summary'; return renderSummary(); }
     return renderExercise();
   }
@@ -392,7 +398,7 @@
     const hint = L.progressionHint(ex, hist);
     const todaySets = live.sets.filter(s => s.key === step.key && s.stepIndex !== live.idx).sort((a, b) => a.stepIndex - b.stepIndex);
     const block = live.routine.blocks[step.block];
-    let html = '<div class="session">' + sessionBar('Serie ' + (live.idx + 1) + ' de ' + live.queue.length) + progressBar();
+    let html = '<div class="session">' + sessionBar('Serie ' + (live.idx + 1) + ' de ' + live.queue.length) + progressBar() + (live.rest ? restBar() : '');
     html += '<div><div class="ex-block">' + esc(block.name) + ' · ' + esc(whereLabel(step)) + '</div><h2 class="ex-name">' + esc(ex.name) + '</h2>' +
       '<div class="ex-meta">' + (ex.note ? '<span>' + esc(ex.note) + '</span>' : '') + '<span>' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + '</span>' +
       (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter && live.idx < live.queue.length - 1 ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div></div>';
@@ -405,8 +411,13 @@
     if (todaySets.length) html += '<div class="last"><span class="eyebrow">Hoy</span><div class="sets">' + todaySets.map(s => setChip(s, 'today')).join('') + '</div></div>';
     html += '<div class="card">';
     if (ex.unit !== 'none') html += '<div class="field"><label>' + (ex.unit === 'ladrillos' ? 'Ladrillos' : 'Peso (kg)') + '</label><div class="stepper"><button data-act="step" data-f="load" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="decimal" step="any" min="0" data-draft="load" value="' + (d.load == null ? '' : d.load) + '" placeholder="' + (ex.target || '') + '"><button data-act="step" data-f="load" data-d="1" aria-label="Más">+</button></div></div>';
-    html += '<div class="field"><label>' + (ex.mode === 'time' ? 'Segundos' : 'Reps') + (ex.perSide ? ' (por lado)' : '') + '</label><div class="stepper"><button data-act="step" data-f="reps" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" step="1" min="0" data-draft="reps" value="' + (d.reps == null ? '' : d.reps) + '" placeholder="' + ex.min + '-' + ex.max + '"><button data-act="step" data-f="reps" data-d="1" aria-label="Más">+</button></div>' +
-      (ex.mode === 'time' ? '<button class="btn sm" data-act="stopwatch">' + (live.sw ? '■ Parar y anotar' : '▶ Cronómetro') + '</button>' : '') + '</div>';
+    if (ex.mode === 'time' && live.sw) {
+      const remaining = live.sw.total - (Date.now() - live.sw.startAt) / 1000;
+      html += '<div class="field"><label>Cuenta regresiva · ' + live.sw.total + '″</label><div class="sw"><div class="count' + (remaining <= 5 ? ' soon' : '') + '" id="swcount">' + L.fmtSecs(remaining) + '</div><button class="btn" data-act="countdown">■ Parar</button></div></div>';
+    } else {
+      html += '<div class="field"><label>' + (ex.mode === 'time' ? 'Segundos' : 'Reps') + (ex.perSide ? ' (por lado)' : '') + '</label><div class="stepper"><button data-act="step" data-f="reps" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" step="1" min="0" data-draft="reps" value="' + (d.reps == null ? '' : d.reps) + '" placeholder="' + ex.min + '-' + ex.max + '"><button data-act="step" data-f="reps" data-d="1" aria-label="Más">+</button></div>' +
+        (ex.mode === 'time' ? '<button class="btn sm" data-act="countdown">▶ Iniciar cuenta regresiva</button>' : '') + '</div>';
+    }
     html += '<div class="field"><label>¿Cómo se sintió?</label><div class="feels">' + L.FEELS.map(f => '<button class="feel ' + f.cls + (d.rir === f.rir ? ' on' : '') + '" data-act="feel" data-rir="' + f.rir + '" title="' + esc(f.hint) + '"><span class="e">' + f.emoji + '</span><span>' + f.label + '</span></button>').join('') + '</div></div>';
     html += '</div>';
     html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="saveSet">Guardar serie</button>' +
@@ -414,20 +425,11 @@
       '<button class="btn sm" data-act="skipStep">Saltar</button><button class="btn sm ghost" data-act="finishEarly">Terminar</button></div></div>';
     return html + '</div>';
   }
-  function renderRest() {
-    const nextStep = currentStep(); const ex = stepExercise(nextStep);
-    const hist = L.exerciseHistory(data.sessions, nextStep.key, { limit: 1 });
-    const block = live.routine.blocks[nextStep.block];
-    const todayLast = live.sets.filter(s => s.key === nextStep.key).sort((a, b) => b.stepIndex - a.stepIndex)[0];
-    let html = '<div class="session">' + sessionBar('Descanso') + progressBar();
-    html += '<div class="rest"><div class="eyebrow">Descanso</div><div class="count" id="count">' + L.fmtSecs((live.rest.endAt - Date.now()) / 1000) + '</div>' +
-      '<div class="actions" style="width:100%"><button class="btn" data-act="restAdd" data-s="-15">−15″</button><button class="btn" data-act="restAdd" data-s="15">+15″</button><button class="btn primary" data-act="restSkip" style="flex:2">Ir al ejercicio</button></div></div>';
-    html += '<div class="next"><span class="eyebrow">Siguiente · ' + esc(block.name) + ' · ' + esc(whereLabel(nextStep)) + '</span><div class="nm">' + esc(ex.name) + '</div>' +
-      '<div class="muted">' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + (ex.note ? ' · ' + esc(ex.note) : '') + '</div>' +
-      (todayLast ? '<div class="sets"><span class="small muted">hoy:</span>' + setChip(todayLast, 'today') + '</div>' : '') +
-      (hist[0] ? '<div class="sets"><span class="small muted">última vez:</span>' + hist[0].sets.map(s => setChip(s)).join('') + '</div>' : (todayLast ? '' : '<div class="small muted">primera vez</div>')) +
-      '<div class="actions" style="margin-top:8px"><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Hacer después ↷</button></div></div>';
-    return html + '</div>';
+  /* Barra de descanso: va arriba de la pantalla del ejercicio siguiente, así no hay que pasar por una pantalla aparte. */
+  function restBar() {
+    const remaining = (live.rest.endAt - Date.now()) / 1000;
+    return '<div class="restbar" id="restbar"><div class="grow"><div class="eyebrow">Descanso</div><div class="count' + (remaining <= 5 ? ' soon' : '') + '" id="count">' + L.fmtSecs(remaining) + '</div></div>' +
+      '<div class="restbar-actions"><button class="btn sm" data-act="restAdd" data-s="-15">−15″</button><button class="btn sm" data-act="restAdd" data-s="15">+15″</button><button class="btn sm" data-act="restSkip">Omitir</button></div></div>';
   }
   function renderSummary() {
     const groups = groupSets(live.sets);
@@ -441,7 +443,7 @@
 
   function saveSet() {
     const step = currentStep(); const ex = stepExercise(step); const d = ensureDraft();
-    if (live.sw) { d.reps = Math.round((Date.now() - live.sw.startAt) / 1000); live.sw = null; }
+    if (live.sw) { d.reps = Math.min(live.sw.total, swElapsed()); live.sw = null; }
     if (ex.unit !== 'none' && d.load == null) { toast('Anotá la carga'); return; }
     if (d.reps == null) { toast(ex.mode === 'time' ? 'Anotá los segundos' : 'Anotá las reps'); return; }
     const set = { id: L.uid('x'), key: step.key, name: ex.name, mode: ex.mode, unit: ex.unit, perSide: !!ex.perSide, block: step.block, round: step.round, setNo: step.setNo, setsTotal: step.setsTotal,
@@ -456,9 +458,8 @@
     live.draft = null; live.sw = null;
     if (live.idx >= live.queue.length - 1) { live.phase = 'summary'; live.rest = null; }
     else {
-      live.idx++;
-      if (rest > 0) { live.phase = 'rest'; live.rest = { endAt: Date.now() + rest * 1000, total: rest, fired: false, spoken: false }; }
-      else live.phase = 'exercise';
+      live.idx++; live.phase = 'exercise';
+      live.rest = rest > 0 ? { endAt: Date.now() + rest * 1000, total: rest, fired: false, spoken: false } : null;
     }
     persistLive(); render();
   }
@@ -477,13 +478,18 @@
     live.sets.forEach(s => { s.stepIndex = remap(s.stepIndex); });
     live.skipped = live.skipped.map(remap);
     live.draft = null; live.sw = null;
-    if (live.phase === 'rest' && live.rest) live.rest.spoken = false;
+    if (live.rest) live.rest.spoken = false;
     persistLive(); render();
     const nm = (step, n) => stepExercise(step).name + (n > 1 ? ' (' + n + ' series)' : '');
     toast('Ahora: ' + nm(r.ahead, r.aheadCount) + ' · después: ' + nm(r.moved, r.movedCount), 3200);
   }
   function prevStep() { if (live.idx > 0) { live.idx--; live.phase = 'exercise'; live.rest = null; live.draft = null; live.sw = null; persistLive(); render(); } }
-  function endRest() { if (!live) return; live.phase = 'exercise'; live.rest = null; persistLive(); render(); }
+  /* Fin del descanso (por tiempo u «Omitir»): se saca la barra sin volver a dibujar la pantalla, para no perder lo que se esté tipeando. */
+  function endRest() {
+    if (!live || !live.rest) return;
+    live.rest = null; persistLive();
+    const bar = document.getElementById('restbar'); if (bar) bar.remove();
+  }
   function saveSession() {
     const started = new Date(live.startedAt);
     data.sessions.push({ id: live.id, date: L.dateStr(started), routineId: live.routineId, routineName: live.routineName, manual: false, startedAt: live.startedAt, endedAt: new Date().toISOString(),
@@ -493,12 +499,32 @@
     render(); toast('Sesión guardada. ¡Bien ahí!');
     if (data.settings.vibrate && navigator.vibrate) navigator.vibrate(80);
   }
-  function toggleStopwatch() {
-    if (live.sw) { const d = ensureDraft(); d.reps = Math.round((Date.now() - live.sw.startAt) / 1000); live.sw = null; }
-    else live.sw = { startAt: Date.now() };
+  /* Cuenta regresiva para ejercicios por tiempo (plancha): se fija el objetivo en segundos, se inicia y avisa al terminar.
+     Si se para antes, quedan anotados los segundos que se aguantaron. */
+  function swElapsed() { return Math.round((Date.now() - live.sw.startAt) / 1000); }
+  function toggleCountdown() {
+    const ex = stepExercise(currentStep()); const d = ensureDraft();
+    if (live.sw) { d.reps = Math.min(live.sw.total, swElapsed()); live.sw = null; }
+    else {
+      ensureAudio();
+      if (!(d.reps > 0)) d.reps = ex.min;
+      live.sw = { startAt: Date.now(), total: d.reps, fired: false, ticked: 0 };
+    }
     persistLive(); render();
   }
-  function tickStopwatch() { if (!live || !live.sw) return; const inp = document.querySelector('[data-draft="reps"]'); if (inp) inp.value = Math.round((Date.now() - live.sw.startAt) / 1000); }
+  function tickCountdown() {
+    if (!live || !live.sw) return;
+    const remaining = live.sw.total - (Date.now() - live.sw.startAt) / 1000;
+    const el = document.getElementById('swcount');
+    if (el) { el.textContent = L.fmtSecs(remaining); el.className = 'count' + (remaining <= 5 ? ' soon' : ''); }
+    const secs = Math.ceil(remaining);
+    if (secs > 0 && secs <= 3 && live.sw.ticked !== secs) { live.sw.ticked = secs; tickBeep(); }
+    if (remaining <= 0 && !live.sw.fired) {
+      live.sw.fired = true;
+      const d = ensureDraft(); d.reps = live.sw.total; live.sw = null; persistLive();
+      alertUser(); render(); toast('¡Tiempo! ' + d.reps + '″ cumplidos', 2500);
+    }
+  }
 
   /* ---- Temporizadores, sonido, vibración, voz, pantalla ---- */
   let timers = [];
@@ -506,7 +532,7 @@
   function afterSessionRender() {
     if (data.settings.wakeLock && live.phase !== 'summary') requestWakeLock();
     timers.push(setInterval(() => { const c = document.getElementById('clock'); if (c && live) c.textContent = L.fmtSecs((Date.now() - new Date(live.startedAt)) / 1000); }, 1000));
-    if (live.phase === 'rest') {
+    if (live.phase === 'exercise' && live.rest) {
       timers.push(setInterval(tickRest, 250));
       if (!live.rest.spoken) {
         live.rest.spoken = true; persistLive();
@@ -515,10 +541,10 @@
           (hist[0] && hist[0].sets[0].load != null ? '. Última vez ' + L.fmtLoad(hist[0].sets[0].load, hist[0].sets[0].unit).replace('kg', 'kilos') : ''));
       }
     }
-    if (live.phase === 'exercise' && live.sw) timers.push(setInterval(tickStopwatch, 200));
+    if (live.phase === 'exercise' && live.sw) timers.push(setInterval(tickCountdown, 200));
   }
   function tickRest() {
-    if (!live || live.phase !== 'rest' || !live.rest) return;
+    if (!live || !live.rest) return;
     const remaining = (live.rest.endAt - Date.now()) / 1000;
     const el = document.getElementById('count');
     if (el) { el.textContent = L.fmtSecs(remaining); el.className = 'count' + (remaining <= 5 ? ' soon' : ''); }
@@ -541,6 +567,15 @@
       });
     } catch (e) { /* sin audio */ }
   }
+  function tickBeep() {
+    if (!data.settings.sound || !audio) return;
+    try {
+      const t = audio.currentTime, o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = 660;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+      o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + 0.1);
+    } catch (e) { /* sin audio */ }
+  }
   function alertUser() { beep(); if (data.settings.vibrate && navigator.vibrate) { try { navigator.vibrate([250, 100, 250, 100, 500]); } catch (e) { /* nada */ } } }
   function announce(text) {
     if (!data.settings.voice || !window.speechSynthesis) return;
@@ -555,7 +590,8 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     if (ui.inSession && live && data.settings.wakeLock && live.phase !== 'summary') requestWakeLock();
-    if (live && live.phase === 'rest') tickRest();
+    if (live && live.rest) tickRest();
+    if (live && live.sw) tickCountdown();
   });
 
   /* ================= Acciones ================= */
@@ -586,9 +622,9 @@
     saveSet: saveSet, skipStep: skipStep, postponeStep: postponeStep, prevStep: prevStep,
     finishEarly: () => { live.phase = 'summary'; live.rest = null; live.sw = null; persistLive(); render(); },
     backToExercises: () => { live.phase = 'exercise'; if (live.idx >= live.queue.length) live.idx = live.queue.length - 1; live.draft = null; persistLive(); render(); },
-    restAdd: d => { live.rest.endAt += (+d.s) * 1000; live.rest.fired = false; persistLive(); tickRest(); },
+    restAdd: d => { if (!live.rest) return; live.rest.endAt += (+d.s) * 1000; live.rest.fired = false; persistLive(); tickRest(); },
     restSkip: endRest,
-    stopwatch: toggleStopwatch,
+    countdown: toggleCountdown,
     saveSession: saveSession,
     /* rutinas */
     newRoutine: () => { ui.editor = { isNew: true, routine: { id: L.uid('r'), name: '', subtitle: '', active: true, warmup: '', notes: '', blocks: [blankBlock()] } }; ui.view = { name: 'edit' }; render(); },

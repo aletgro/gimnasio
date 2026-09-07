@@ -148,12 +148,15 @@ select.input { appearance: auto; }
 .hint.down { background: var(--bad-bg); color: var(--bad); }
 .hint.near { background: var(--warn-bg); color: var(--warn); }
 .hint b { flex: none; }
-.rest { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; padding: 10px 0; }
-.rest .count { font-family: var(--font-display); font-weight: 800; font-size: 112px; line-height: 1; letter-spacing: .02em; }
-.rest .count.soon { color: var(--f2); }
-.rest .count.over { color: var(--f0); }
-.next { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
-.next .nm { font-family: var(--font-display); font-weight: 700; font-size: 26px; text-transform: uppercase; line-height: 1; }
+.count { font-family: var(--font-display); font-weight: 800; line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.count.soon { color: var(--f2); }
+.restbar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; }
+.restbar .grow { flex: 1; min-width: 0; }
+.restbar .count { font-size: 34px; }
+.restbar-actions { display: flex; gap: 6px; flex: none; }
+.restbar-actions .btn.sm { padding: 6px 9px; }
+.sw { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 12px; padding: 8px 8px 8px 16px; min-height: 62px; }
+.sw .count { font-size: 44px; }
 .warm { white-space: pre-line; }
 .blocks { display: flex; flex-direction: column; gap: 8px; }
 .block-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: var(--bg-2); border-radius: 10px; }
