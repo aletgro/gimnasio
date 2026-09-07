@@ -64,7 +64,8 @@
     else document.documentElement.removeAttribute('data-theme');
   }
   const feelChip = rir => { const f = L.feel(rir); return f ? '<span class="dot ' + f.cls + '" title="' + esc(f.label) + '"></span>' : ''; };
-  const feelText = rir => { const f = L.feel(rir); return f ? f.emoji + ' ' + f.label : 'sin sensación'; };
+  const feelText = rir => { const f = L.feel(rir); return f ? f.label : 'sin sensación'; };
+  const feelBtn = (f, on, act) => '<button class="feel ' + f.cls + (on ? ' on' : '') + '" data-act="' + act + '" data-rir="' + f.rir + '" title="' + esc(f.hint) + '"><span class="lbl">' + f.label + '</span><span class="rir">RIR ' + (f.rir === 4 ? '4+' : f.rir) + '</span></button>';
   function setChip(set, extraCls) {
     return '<span class="setchip ' + (extraCls || '') + '">' + esc(L.fmtSet(set)) + (set.perSide ? '<span class="muted small">/lado</span>' : '') + feelChip(set.rir) + '</span>';
   }
@@ -74,7 +75,12 @@
     home: '<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
     routines: '<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
     calendar: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
-    data: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>'
+    data: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
+    up: '<svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+    x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    left: '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>',
+    right: '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>'
   };
   const TABS = [['home', 'Hoy'], ['routines', 'Rutinas'], ['calendar', 'Calendario'], ['data', 'Datos']];
 
@@ -109,7 +115,7 @@
     const n = (s.sets || []).length;
     const dur = s.startedAt && s.endedAt ? L.fmtDuration(new Date(s.endedAt) - new Date(s.startedAt)) : '';
     return '<button class="row link" data-act="openSession" data-id="' + esc(s.id) + '"><div class="grow"><div class="title">' + esc(s.routineName || 'Sesión') + '</div>' +
-      '<div class="sub">' + esc(L.fmtDateLong(s.date)) + (dur ? ' · ' + dur : '') + (s.manual ? ' · día marcado' : ' · ' + n + (n === 1 ? ' serie' : ' series')) + '</div></div><span class="chev">›</span></button>';
+      '<div class="sub">' + esc(L.fmtDateLong(s.date)) + (dur ? ' · ' + dur : '') + (s.manual ? ' · día marcado' : ' · ' + n + (n === 1 ? ' serie' : ' series')) + '</div></div><span class="chev">' + ICONS.right + '</span></button>';
   }
 
   /* ================= Hoy ================= */
@@ -159,7 +165,7 @@
     const st = L.stats(data.sessions, t);
     const selSessions = byDate[sel] || [];
     let html = '<div class="screen">' + topbar('Calendario') +
-      '<div class="card"><div class="cal-head"><button class="btn icon" data-act="calMove" data-n="-1" aria-label="Mes anterior">‹</button><div class="m">' + L.MONTHS[m] + ' ' + y + '</div><button class="btn icon" data-act="calMove" data-n="1" aria-label="Mes siguiente">›</button></div>' +
+      '<div class="card"><div class="cal-head"><button class="btn icon" data-act="calMove" data-n="-1" aria-label="Mes anterior">' + ICONS.left + '</button><div class="m">' + L.MONTHS[m] + ' ' + y + '</div><button class="btn icon" data-act="calMove" data-n="1" aria-label="Mes siguiente">' + ICONS.right + '</button></div>' +
       '<div class="cal">' + cells + '</div></div>';
     html += '<div class="card"><div class="card-head"><b>' + esc(L.fmtDateLong(sel)) + '</b>' + (sel === t ? '<span class="pill">hoy</span>' : '') + '</div>';
     if (selSessions.length) html += '<div class="list">' + selSessions.map(sessionRow).join('') + '</div>';
@@ -270,13 +276,13 @@
     r.blocks.forEach((b, bi) => {
       const p = 'blocks.' + bi + '.';
       html += '<div class="block-card"><div class="bh">' + inp(p + 'name', b.name, 'text', 'placeholder="Nombre del bloque"') +
-        '<button class="iconbtn" data-act="moveBlock" data-bi="' + bi + '" data-dir="-1" aria-label="Subir bloque">▲</button><button class="iconbtn" data-act="moveBlock" data-bi="' + bi + '" data-dir="1" aria-label="Bajar bloque">▼</button><button class="iconbtn" data-act="delBlock" data-bi="' + bi + '" aria-label="Eliminar bloque">×</button></div>' +
+        '<button class="iconbtn" data-act="moveBlock" data-bi="' + bi + '" data-dir="-1" aria-label="Subir bloque">' + ICONS.up + '</button><button class="iconbtn" data-act="moveBlock" data-bi="' + bi + '" data-dir="1" aria-label="Bajar bloque">' + ICONS.down + '</button><button class="iconbtn" data-act="delBlock" data-bi="' + bi + '" aria-label="Eliminar bloque">' + ICONS.x + '</button></div>' +
         fld('Tipo', sel(p + 'type', b.type, [['circuit', 'Circuito / superset: una serie de cada ejercicio por vuelta'], ['straight', 'Series: todas las series de un ejercicio, luego el siguiente']]));
       if (b.type === 'circuit') html += '<div class="grid3">' + fld('Vueltas', inp(p + 'rounds', b.rounds, 'number')) + fld('Desc. entre ej. (s)', inp(p + 'restBetween', b.restBetween, 'number')) + fld('Desc. fin de vuelta (s)', inp(p + 'restAfterRound', b.restAfterRound, 'number')) + '</div>';
       b.exercises.forEach((ex, ei) => {
         const q = p + 'exercises.' + ei + '.';
         html += '<div class="ex-card"><div class="ttl">' + inp(q + 'name', ex.name, 'text', 'placeholder="Ejercicio"') +
-          '<button class="iconbtn" data-act="moveEx" data-bi="' + bi + '" data-ei="' + ei + '" data-dir="-1" aria-label="Subir">▲</button><button class="iconbtn" data-act="moveEx" data-bi="' + bi + '" data-ei="' + ei + '" data-dir="1" aria-label="Bajar">▼</button><button class="iconbtn" data-act="delEx" data-bi="' + bi + '" data-ei="' + ei + '" aria-label="Eliminar">×</button></div>' +
+          '<button class="iconbtn" data-act="moveEx" data-bi="' + bi + '" data-ei="' + ei + '" data-dir="-1" aria-label="Subir">' + ICONS.up + '</button><button class="iconbtn" data-act="moveEx" data-bi="' + bi + '" data-ei="' + ei + '" data-dir="1" aria-label="Bajar">' + ICONS.down + '</button><button class="iconbtn" data-act="delEx" data-bi="' + bi + '" data-ei="' + ei + '" aria-label="Eliminar">' + ICONS.x + '</button></div>' +
           fld('Detalle (ej.: «barra», «c/mano»)', inp(q + 'note', ex.note)) +
           '<div class="grid3">' + fld('Medida', sel(q + 'mode', ex.mode, [['reps', 'Reps'], ['time', 'Segundos']])) + fld('Mín.', inp(q + 'min', ex.min, 'number')) + fld('Máx.', inp(q + 'max', ex.max, 'number')) + '</div>' +
           '<div class="grid3">' + fld('Carga', sel(q + 'unit', ex.unit, [['kg', 'kg'], ['ladrillos', 'Ladrillos'], ['none', 'Sin carga']])) + fld('Objetivo', inp(q + 'target', ex.target, 'number')) + fld('Salto +/−', inp(q + 'step', ex.step, 'number')) + '</div>' +
@@ -350,15 +356,15 @@
     if (existing) { load = existing.load; reps = existing.reps; rir = existing.rir; }
     else {
       /* Nunca arrancar vacío: carga = la de hoy, si no la de la última vez, si no el objetivo (0 vale: sin peso).
-         Reps = la misma serie de la última vez, si no la última serie de hoy, si no el piso del rango. */
+         Reps = lo último que anotaste hoy en este ejercicio; si es la primera serie de hoy, la misma serie de la última vez; si no, el piso del rango. */
       if (ex.unit !== 'none') {
         if (todaySets.length) load = todaySets[todaySets.length - 1].load;
         else if (hist[0] && hist[0].sets[hist[0].sets.length - 1].load != null) load = hist[0].sets[hist[0].sets.length - 1].load;
         else load = ex.target != null ? ex.target : null;
       }
       const lastMatch = hist[0] ? (hist[0].sets[todaySets.length] || hist[0].sets[hist[0].sets.length - 1]) : null;
-      if (lastMatch && lastMatch.reps != null) reps = lastMatch.reps;
-      else if (todaySets.length && todaySets[todaySets.length - 1].reps != null) reps = todaySets[todaySets.length - 1].reps;
+      if (todaySets.length && todaySets[todaySets.length - 1].reps != null) reps = todaySets[todaySets.length - 1].reps;
+      else if (lastMatch && lastMatch.reps != null) reps = lastMatch.reps;
       else reps = ex.min;
     }
     live.draft = { stepIndex: live.idx, load, reps, rir };
@@ -368,7 +374,7 @@
     const withF = sets.filter(s => s.rir != null);
     if (!withF.length) return 'sin sensación registrada';
     const f = L.feel(Math.min.apply(null, withF.map(s => s.rir)));
-    return 'peor serie: ' + f.emoji + ' ' + f.label + ' (' + f.hint + ')';
+    return '<span class="feelline">' + feelChip(f.rir) + 'peor serie: ' + f.label + ' · ' + f.hint + '</span>';
   }
   function whereLabel(step) {
     const block = live.routine.blocks[step.block];
@@ -387,7 +393,7 @@
   }
   function renderStart() {
     const r = live.routine;
-    let html = '<div class="session">' + sessionBar('Antes de empezar') + '<div><div class="eyebrow">Sesión</div><h2 class="ex-name" style="font-size:32px">' + esc(r.name) + '</h2></div>';
+    let html = '<div class="session">' + sessionBar('Antes de empezar') + '<div><div class="eyebrow">Sesión</div><h2 class="title-lg">' + esc(r.name) + '</h2></div>';
     if (r.warmup) html += '<div class="card"><div class="eyebrow">Calentamiento</div><p class="warm">' + esc(r.warmup) + '</p></div>';
     if (r.notes) html += '<div class="card flat"><div class="eyebrow">Notas</div><p class="warm">' + esc(r.notes) + '</p></div>';
     html += '<div class="card"><div class="eyebrow">Hoy</div><div class="blocks">' + r.blocks.map((b, bi) =>
@@ -407,10 +413,10 @@
     html += '<div><div class="ex-block">' + esc(block.name) + ' · ' + esc(whereLabel(step)) + '</div><h2 class="ex-name">' + esc(ex.name) + '</h2>' +
       '<div class="ex-meta">' + (ex.note ? '<span>' + esc(ex.note) + '</span>' : '') + '<span>' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + '</span>' +
       (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter && live.idx < live.queue.length - 1 ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div></div>';
-    html += '<div class="card last"><div class="card-head"><span class="eyebrow">Última vez' + (hist[0] ? ' · ' + esc(L.relDate(hist[0].date, today())) : '') + '</span>' +
-      (hist[1] ? '<span class="small muted">antes: ' + hist[1].sets.map(s => esc(L.fmtSet(s))).join(', ') + '</span>' : '') + '</div>';
+    html += '<div class="card last"><div class="card-head"><span class="eyebrow">Última vez' + (hist[0] ? ' · ' + esc(L.relDate(hist[0].date, today())) : '') + '</span></div>';
     if (hist[0]) html += '<div class="sets">' + hist[0].sets.map(s => setChip(s)).join('') + '</div><div class="small muted">' + summarizeFeel(hist[0].sets) + '</div>';
     else html += '<p class="muted">Primera vez que registrás este ejercicio.</p>';
+    if (hist[1]) html += '<div class="small muted">Antes, ' + esc(L.relDate(hist[1].date, today())) + ': ' + hist[1].sets.map(s => esc(L.fmtSet(s))).join(' · ') + '</div>';
     if (hint) html += '<div class="hint ' + hint.type + '"><b>' + (hint.type === 'up' ? '↑' : hint.type === 'down' ? '↓' : '→') + '</b><span>' + esc(hint.text) + '</span></div>';
     html += '</div>';
     if (todaySets.length) html += '<div class="last"><span class="eyebrow">Hoy</span><div class="sets">' + todaySets.map(s => setChip(s, 'today')).join('') + '</div></div>';
@@ -423,7 +429,7 @@
       html += '<div class="field"><label>' + (ex.mode === 'time' ? 'Segundos' : 'Reps') + (ex.perSide ? ' (por lado)' : '') + '</label><div class="stepper"><button data-act="step" data-f="reps" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" step="1" min="0" data-draft="reps" value="' + (d.reps == null ? '' : d.reps) + '" placeholder="' + ex.min + '-' + ex.max + '"><button data-act="step" data-f="reps" data-d="1" aria-label="Más">+</button></div>' +
         (ex.mode === 'time' ? '<button class="btn sm" data-act="countdown">▶ Iniciar cuenta regresiva</button>' : '') + '</div>';
     }
-    html += '<div class="field"><label>¿Cómo se sintió?</label><div class="feels">' + L.FEELS.map(f => '<button class="feel ' + f.cls + (d.rir === f.rir ? ' on' : '') + '" data-act="feel" data-rir="' + f.rir + '" title="' + esc(f.hint) + '"><span class="e">' + f.emoji + '</span><span>' + f.label + '</span></button>').join('') + '</div></div>';
+    html += '<div class="field"><label>¿Cómo se sintió?</label><div class="feels">' + L.FEELS.map(f => feelBtn(f, d.rir === f.rir, 'feel')).join('') + '</div></div>';
     html += '</div>';
     html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="saveSet">Guardar serie</button>' +
       '<div class="grid2"><button class="btn sm" data-act="prevStep"' + (live.idx === 0 ? ' disabled' : '') + '>‹ Anterior</button><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Hacer después ↷</button>' +
@@ -438,7 +444,7 @@
   }
   function renderSummary() {
     const groups = groupSets(live.sets);
-    let html = '<div class="session">' + sessionBar('Resumen') + '<div><div class="eyebrow">Sesión terminada</div><h2 class="ex-name" style="font-size:32px">' + esc(live.routineName) + '</h2>' +
+    let html = '<div class="session">' + sessionBar('Resumen') + '<div><div class="eyebrow">Sesión terminada</div><h2 class="title-lg">' + esc(live.routineName) + '</h2>' +
       '<p class="muted">' + L.fmtDuration(Date.now() - new Date(live.startedAt)) + ' · ' + live.sets.length + ' series' + (live.skipped.length ? ' · ' + live.skipped.length + ' saltadas' : '') + '</p></div>';
     html += '<div class="card">' + (groups.length ? groups.map(g => '<div class="summary-ex"><div class="nm">' + esc(g.name) + '</div><div class="sets">' + g.sets.map(s => setChip(s)).join('') + '</div></div>').join('') : '<p class="muted">No registraste series.</p>') + '</div>';
     html += '<div class="card"><div class="field"><label>Nota de la sesión (opcional)</label><textarea class="input" data-live="note" placeholder="Cómo te sentiste, dolores, tiempo disponible…">' + esc(live.note) + '</textarea></div></div>';
@@ -607,7 +613,7 @@
     openSession: d => { closeModal(); ui.view = { name: 'session', id: d.id }; render(); },
     startRoutine: d => startRoutine(d.id),
     pickRoutine: () => openModal('<h3 class="h2">Elegir rutina</h3><div class="list">' + data.routines.map(r =>
-      '<button class="row link" data-act="startRoutine" data-id="' + esc(r.id) + '"><div class="grow"><div class="title">' + esc(r.name) + '</div><div class="sub">' + esc(r.subtitle || '') + '</div></div><span class="chev">›</span></button>').join('') +
+      '<button class="row link" data-act="startRoutine" data-id="' + esc(r.id) + '"><div class="grow"><div class="title">' + esc(r.name) + '</div><div class="sub">' + esc(r.subtitle || '') + '</div></div><span class="chev">' + ICONS.right + '</span></button>').join('') +
       '</div><button class="btn" data-act="closeModal">Cancelar</button>'),
     resumeSession: () => { ui.inSession = true; render(); },
     discardSession: () => confirmModal('Descartar sesión', 'Se pierde lo anotado en esta sesión.', 'Descartar', () => { live = null; persistLive(); ui.inSession = false; closeModal(); render(); }, true),
@@ -658,7 +664,7 @@
       openModal('<h3 class="h2">' + esc(set.name) + '</h3><p class="muted">' + esc(L.fmtDateShort(s.date)) + ' · serie ' + set.setNo + '</p>' +
         (set.unit !== 'none' ? '<div class="field"><label>' + (set.unit === 'ladrillos' ? 'Ladrillos' : 'Peso (kg)') + '</label><input class="input" type="number" inputmode="decimal" step="any" id="esLoad" value="' + (set.load == null ? '' : set.load) + '"></div>' : '') +
         '<div class="field"><label>' + (set.mode === 'time' ? 'Segundos' : 'Reps') + '</label><input class="input" type="number" inputmode="numeric" id="esReps" value="' + (set.reps == null ? '' : set.reps) + '"></div>' +
-        '<div class="field"><label>Sensación</label><div class="feels">' + L.FEELS.map(f => '<button class="feel ' + f.cls + (set.rir === f.rir ? ' on' : '') + '" data-act="feelModal" data-rir="' + f.rir + '"><span class="e">' + f.emoji + '</span><span>' + f.label + '</span></button>').join('') + '</div></div>' +
+        '<div class="field"><label>Sensación</label><div class="feels">' + L.FEELS.map(f => feelBtn(f, set.rir === f.rir, 'feelModal')).join('') + '</div></div>' +
         '<div class="actions"><button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="delSet" data-sid="' + esc(s.id) + '" data-id="' + esc(set.id) + '">Borrar</button><button class="btn primary" data-act="editSetOk" data-sid="' + esc(s.id) + '" data-id="' + esc(set.id) + '">Guardar</button></div>');
     },
     feelModal: d => { modalRir = modalRir === +d.rir ? null : +d.rir; $modal.querySelectorAll('.feel').forEach(b => b.classList.toggle('on', +b.dataset.rir === modalRir)); },

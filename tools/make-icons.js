@@ -1,7 +1,7 @@
 // Genera los íconos PNG de la PWA (sin dependencias). Uso: node tools/make-icons.js
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const OUT = path.join(__dirname, '..', 'icons');
-const BG = [0x19, 0x18, 0x16], FG = [0xF1, 0xEC, 0xE2];
+const BG = [0x0E, 0x10, 0x13], FG = [0xED, 0xEF, 0xF3];
 
 const CRC = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 function crc32(buf) { let c = 0xFFFFFFFF; for (const b of buf) c = CRC[(c ^ b) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }

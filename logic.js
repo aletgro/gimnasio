@@ -51,7 +51,7 @@ window.GymLogic = (function () {
   }
   function unitLabel(unit) { return unit === 'kg' ? 'kg' : unit === 'ladrillos' ? 'ladrillos' : ''; }
   function fmtReps(set) { if (set.reps == null) return '?'; return set.mode === 'time' ? set.reps + '″' : String(set.reps); }
-  function fmtSet(set) { const l = fmtLoad(set.load, set.unit); const r = fmtReps(set); return l ? l + ' × ' + r : r; }
+  function fmtSet(set) { const l = fmtLoad(set.load, set.unit); if (set.reps == null) return l || '?'; return l ? l + ' × ' + fmtReps(set) : fmtReps(set); }
   function fmtSecs(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + pad2(s % 60); }
   function fmtDuration(ms) { const m = Math.max(0, Math.round(ms / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; }
   function rangeLabel(ex) { return ex.mode === 'time' ? ex.min + '-' + ex.max + '″' : ex.min + '-' + ex.max + ' reps'; }
