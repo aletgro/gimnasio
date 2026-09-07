@@ -349,12 +349,17 @@
     let load = null, reps = null, rir = null;
     if (existing) { load = existing.load; reps = existing.reps; rir = existing.rir; }
     else {
+      /* Nunca arrancar vacío: carga = la de hoy, si no la de la última vez, si no el objetivo (0 vale: sin peso).
+         Reps = la misma serie de la última vez, si no la última serie de hoy, si no el piso del rango. */
       if (ex.unit !== 'none') {
         if (todaySets.length) load = todaySets[todaySets.length - 1].load;
         else if (hist[0] && hist[0].sets[hist[0].sets.length - 1].load != null) load = hist[0].sets[hist[0].sets.length - 1].load;
-        else load = ex.target || null;
+        else load = ex.target != null ? ex.target : null;
       }
-      if (hist[0]) { const m = hist[0].sets[todaySets.length] || hist[0].sets[hist[0].sets.length - 1]; reps = m.reps; }
+      const lastMatch = hist[0] ? (hist[0].sets[todaySets.length] || hist[0].sets[hist[0].sets.length - 1]) : null;
+      if (lastMatch && lastMatch.reps != null) reps = lastMatch.reps;
+      else if (todaySets.length && todaySets[todaySets.length - 1].reps != null) reps = todaySets[todaySets.length - 1].reps;
+      else reps = ex.min;
     }
     live.draft = { stepIndex: live.idx, load, reps, rir };
     return live.draft;
