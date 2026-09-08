@@ -127,21 +127,128 @@ window.GymLogic = (function () {
     return out;
   }
 
-  /* ---- Doble progresión: dos sesiones seguidas al tope del rango con RIR ≤ 2 → subir ---- */
-  function progressionHint(ex, history) {
-    if (!history || !history.length) return null;
-    const top = h => h.sets.length > 0 && h.sets.every(s => s.reps != null && s.reps >= ex.max && s.rir != null && s.rir <= 2);
-    if (history.length >= 2 && top(history[0]) && top(history[1])) {
-      const step = ex.mode === 'time' ? '+5″' : ex.unit === 'ladrillos' ? '+1 ladrillo' : ex.unit === 'kg' ? 'siguiente peso' : 'más difícil';
-      return { type: 'up', text: 'Subí la carga (' + step + '): dos sesiones seguidas al tope del rango con RIR ≤ 2. Volvé al piso del rango.' };
+  /* ---- Guía de doble progresión con RIR objetivo ----
+     target = { min, max } es el RIR objetivo de la fase: terminar cada serie pudiendo hacer entre min y max reps más.
+     RIR por debajo de min = más al límite de lo previsto ("hard"); por encima de max = te sobró ("easy"). */
+  function effort(rir, target) {
+    if (rir == null || !target) return null;
+    if (rir < target.min) return 'hard';
+    if (rir > target.max) return 'easy';
+    return 'ok';
+  }
+  function rirLabel(target) { return 'RIR ' + (target.min === target.max ? target.min : target.min + '-' + target.max); }
+  function loadStepOf(ex) { return ex.step || (ex.unit === 'ladrillos' ? 1 : 2.5); }
+  function unitWord(ex, n) { return ex.mode === 'time' ? (n === 1 ? 'segundo' : 'segundos') : (n === 1 ? 'rep' : 'reps'); }
+  function stepText(ex, dir) {
+    const sign = dir < 0 ? '−' : '+';
+    if (ex.mode === 'time') return sign + '5″';
+    if (ex.unit === 'ladrillos') return sign + '1 ladrillo';
+    if (ex.unit === 'kg') return sign + fmtNum(loadStepOf(ex)) + ' kg';
+    return dir < 0 ? 'más fácil' : 'más difícil';
+  }
+  function nextLoad(ex, load, dir) {
+    if (ex.unit === 'none' || load == null) return null;
+    return Math.max(0, Math.round((load + dir * loadStepOf(ex)) * 100) / 100);
+  }
+  /* Serie de referencia de una sesión anterior: la misma serie (n, desde 0) o la última si hubo menos. */
+  function refSet(h, n) { return h && h.sets && h.sets.length ? (h.sets[n] || h.sets[h.sets.length - 1]) : null; }
+  /* Decisión para el ejercicio hoy, a partir de su historial (más reciente primero). Devuelve
+     { kind, load, reps, targets?, short, text }. kinds: first | start | down | up | near | hold | hard | reps.
+     Regla del programa: la carga sube cuando dos sesiones seguidas llegan al tope del rango en todas las series
+     sin pasarse del RIR objetivo; si además sobró (RIR por encima del máximo), alcanza con una. */
+  function exercisePlan(ex, target, history) {
+    const h0 = history && history[0], h1 = history && history[1];
+    const u = unitWord(ex), lbl = rirLabel(target), isTime = ex.mode === 'time', hasLoad = ex.unit !== 'none';
+    const rng = target.min + '-' + target.max;
+    if (!h0) return { kind: 'first', load: hasLoad && ex.target != null ? ex.target : null, reps: ex.min,
+      short: (hasLoad ? 'elegí la carga: ' : '') + ex.min + ' ' + u + ' con ' + lbl,
+      text: 'Primera vez. ' + (hasLoad ? 'Elegí una carga con la que hagas ' + ex.min + ' ' + u + ' con técnica limpia, terminando con ' + lbl + '. Si dudás entre dos, la menor.' : 'Llegá a ' + ex.min + ' ' + u + ' con buena forma, terminando con ' + lbl + '.') };
+    const sets = h0.sets, last = sets[sets.length - 1], lastLoad = hasLoad ? last.load : null;
+    const loadTxt = hasLoad && lastLoad != null ? ' (' + fmtLoad(lastLoad, ex.unit) + ')' : '';
+    const top = s => s.reps != null && s.reps >= ex.max;
+    const rated = sets.filter(s => s.rir != null);
+    const worst = rated.length ? Math.min.apply(null, rated.map(s => s.rir)) : null;
+    const best = rated.length ? Math.max.apply(null, rated.map(s => s.rir)) : null;
+    const anyHard = worst != null && worst < target.min;
+    const anyEasy = best != null && best > target.max;
+    const allEasy = rated.length > 0 && rated.every(s => s.rir > target.max);
+    if (sets.every(s => s.reps == null)) return { kind: 'start', load: lastLoad, reps: ex.min,
+      short: 'mismo peso, ' + ex.min + ' ' + u + ' con ' + lbl,
+      text: 'La última vez no anotaste ' + u + '. Mismo peso' + loadTxt + ': arrancá en ' + ex.min + ' terminando con ' + lbl + ', y de ahí sumás.' };
+    if (sets.some(s => s.rir === 0 && s.reps != null && s.reps < ex.min)) {
+      const load = nextLoad(ex, lastLoad, -1);
+      return { kind: 'down', load, reps: ex.min, short: hasLoad && load != null ? 'bajá a ' + fmtLoad(load, ex.unit) : 'hacela más fácil',
+        text: 'La última vez llegaste al fallo por debajo de ' + ex.min + ' ' + u + '. ' + (hasLoad ? 'Bajá la carga (' + stepText(ex, -1) + ')' : 'Hacela más fácil') + ' y volvé a construir desde ' + ex.min + ' con ' + lbl + '.' };
     }
-    if (history[0].sets.some(s => s.rir === 0 && s.reps != null && s.reps < ex.min)) {
-      return { type: 'down', text: 'La última vez llegaste al fallo por debajo del rango: bajá un poco la carga.' };
+    const topAll = sets.every(top);
+    const prevOk = !!(h1 && h1.sets.every(top) && (!hasLoad || refSet(h1, 99).load === lastLoad) && !h1.sets.some(s => s.rir != null && s.rir < target.min));
+    if (topAll && !anyHard && (allEasy || prevOk)) {
+      const why = allEasy ? 'llegaste a ' + ex.max + ' en todas las series y te sobró (RIR ' + (worst === best ? worst : worst + '-' + best) + ')' : 'dos sesiones seguidas al tope en todas las series dentro del ' + lbl;
+      if (!hasLoad) return { kind: 'up', load: null, reps: isTime ? ex.max + 5 : ex.max,
+        short: isTime ? 'subí el objetivo a ' + (ex.max + 5) + '″' : 'hacela más difícil',
+        text: 'Toca subir: ' + why + '. ' + (isTime ? 'Buscá ' + (ex.max + 5) + '″ o hacela más difícil (más lento, pies elevados).' : 'Hacela más difícil (más lento, más recorrido).') };
+      const load = nextLoad(ex, lastLoad, 1);
+      return { kind: 'up', load, reps: ex.min, short: 'subí a ' + fmtLoad(load, ex.unit) + ' y volvé a ' + ex.min,
+        text: 'Subí la carga (' + stepText(ex, 1) + '): ' + why + '. Volvé a ' + ex.min + ' ' + u + ' con el peso nuevo; la técnica no cambia.' };
     }
-    if (top(history[0])) {
-      return { type: 'near', text: 'Una sesión más al tope del rango con RIR ≤ 2 y toca subir la carga.' };
+    if (topAll && !anyHard) return { kind: 'near', load: lastLoad, reps: ex.max, short: 'repetí ' + ex.max + ' en todas y la próxima subís',
+      text: 'Ya tocaste el tope (' + ex.max + ') en todas las series. Repetilo hoy terminando con ' + lbl + ' y en la próxima sesión subís la carga.' };
+    if (topAll) return { kind: 'hold', load: lastLoad, reps: ex.max, short: 'mismo peso, ' + ex.max + ' con ' + lbl,
+      text: 'Llegaste a ' + ex.max + ' pero más al límite de lo que pide la fase (RIR ' + worst + ', objetivo ' + rng + '). Mismo peso' + loadTxt + ': el día que hagas ' + ex.max + ' en todas las series terminando con ' + lbl + ', subís.' };
+    if (anyHard) return { kind: 'hard', load: lastLoad, reps: null, short: 'mismo peso, cortá en ' + lbl,
+      text: 'La última vez fuiste más al límite de lo que pide la fase (RIR ' + worst + ', objetivo ' + rng + '). Mismo peso' + loadTxt + ', pero cortá cada serie al llegar a ' + lbl + '; las ' + u + ' extra llegan cuando el peso se sienta más fácil.' };
+    const inc = anyEasy ? 2 : 1;
+    const targets = sets.map(s => Math.min(ex.max, (s.reps == null ? ex.min : s.reps) + inc));
+    return { kind: 'reps', load: lastLoad, reps: targets[0], targets, short: 'mismo peso, ' + targets.join(' · '),
+      text: (anyEasy ? 'Te sobró (RIR ' + best + '): m' : 'M') + 'ismo peso' + loadTxt + ', ' + (inc === 2 ? 'dos ' : 'una ') + unitWord(ex, inc) + ' más por serie: ' + targets.join(' · ') + '. Misma técnica, mismo recorrido.' };
+  }
+  function setTarget(plan, n) { return plan.targets ? plan.targets[Math.min(n, plan.targets.length - 1)] : plan.reps; }
+  /* Evaluación de una serie recién guardada: progreso contra la serie de referencia y exigencia contra el RIR objetivo.
+     kind: good | ok | warn | bad | muted */
+  function evaluateSet(ex, target, set, ref, planReps) {
+    const parts = []; let kind = 'ok';
+    const u = unitWord(ex), rng = target.min + '-' + target.max;
+    if (ref && ex.unit !== 'none' && set.load != null && ref.load != null && set.load !== ref.load) {
+      const d = set.load - ref.load;
+      parts.push('carga ' + (d > 0 ? '+' : '−') + fmtNum(Math.abs(d)) + (ex.unit === 'kg' ? ' kg' : '') + ' vs. la última vez'); if (d > 0) kind = 'good';
+    } else if (ref && ref.reps != null && set.reps != null) {
+      const d = set.reps - ref.reps;
+      if (d > 0) { parts.push('+' + d + ' ' + unitWord(ex, d) + ' que la última vez'); kind = 'good'; }
+      else if (d === 0) parts.push('igual que la última vez');
+      else parts.push(d + ' ' + unitWord(ex, -d) + ' que la última vez');
+    } else if (planReps != null && set.reps != null) {
+      if (set.reps >= planReps) { parts.push('objetivo cumplido'); kind = 'good'; } else parts.push('por debajo del objetivo (' + planReps + ')');
     }
-    return null;
+    const eff = effort(set.rir, target);
+    if (eff === null) { parts.push('sin sensación: anotala para evaluar la exigencia'); if (kind === 'ok') kind = 'muted'; }
+    else if (eff === 'hard') {
+      kind = set.rir === 0 ? 'bad' : 'warn';
+      parts.push('RIR ' + set.rir + ': más al límite de lo que pide la fase (' + rng + ')' +
+        (set.reps != null && set.reps < ex.min ? '. Bajá un poco la carga' : set.reps != null && set.reps >= ex.max ? '. No subas la carga todavía' : '. Cortá antes la próxima'));
+    } else if (eff === 'easy') {
+      kind = 'warn';
+      parts.push('RIR ' + set.rir + ': te sobró (objetivo ' + rng + ')' + (set.reps != null && set.reps >= ex.max ? '. Subí la carga ya en la próxima serie' : '. Sumá ' + u + ' en la próxima'));
+    } else parts.push('RIR ' + set.rir + ', dentro del objetivo');
+    return { kind, text: parts.join(' · ') };
+  }
+  /* Veredicto de un ejercicio al cerrar la sesión: comparación con la última vez, exigencia y decisión para la próxima. */
+  function exerciseVerdict(ex, target, todaySets, history) {
+    const h0 = history && history[0], u = unitWord(ex), parts = [];
+    const sum = arr => arr.reduce((a, s) => a + (s.reps || 0), 0);
+    const loadNow = todaySets[todaySets.length - 1].load;
+    if (h0) {
+      const lastLoad = refSet(h0, 99).load;
+      if (ex.unit !== 'none' && loadNow != null && lastLoad != null && loadNow !== lastLoad) parts.push('carga ' + (loadNow > lastLoad ? '+' : '−') + fmtNum(Math.abs(loadNow - lastLoad)) + (ex.unit === 'kg' ? ' kg' : ''));
+      else if (h0.sets.some(s => s.reps != null)) { const d = sum(todaySets) - sum(h0.sets); parts.push(d > 0 ? '+' + d + ' ' + unitWord(ex, d) + ' en total' : d === 0 ? 'mismas ' + u + ' que la última vez' : d + ' ' + u + ' en total'); }
+      else parts.push('primera vez con ' + u + ' anotadas');
+    } else parts.push('primera vez');
+    const rated = todaySets.filter(s => s.rir != null);
+    if (rated.length) {
+      const effs = rated.map(s => effort(s.rir, target));
+      parts.push('RIR ' + rated.map(s => s.rir).join('·') + (effs.includes('hard') ? ', más exigente que la fase' : effs.every(e => e === 'easy') ? ', te sobró' : ', en objetivo'));
+    } else parts.push('sin sensación anotada');
+    const next = exercisePlan(ex, target, [{ sets: todaySets }].concat(history || []));
+    return { text: parts.join(' · '), next };
   }
 
   /* ---- Sugerir próxima rutina: entre las activas, la que hace más tiempo no se hace ---- */
@@ -179,7 +286,7 @@ window.GymLogic = (function () {
 
   const api = { FEELS, feel, slug, uid, clone, dateStr, parseDate, addDays, startOfWeek, daysBetween, DAYS, DAYS_SHORT, MONTHS,
     fmtDateLong, fmtDateShort, relDate, fmtTime, fmtNum, fmtLoad, unitLabel, fmtReps, fmtSet, fmtSecs, fmtDuration, rangeLabel,
-    buildQueue, postponeStep, routineSummary, sortSessions, exerciseHistory, progressionHint, suggestNext, lastSessionOf, stats };
+    buildQueue, postponeStep, routineSummary, sortSessions, exerciseHistory, effort, rirLabel, refSet, exercisePlan, setTarget, evaluateSet, exerciseVerdict, suggestNext, lastSessionOf, stats };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   return api;
 })();

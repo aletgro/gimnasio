@@ -14,6 +14,7 @@ window.GYM_SEED = (function () {
       name: 'Fase 1 · Full body',
       subtitle: 'Reenganche · circuito · ~30′',
       active: true,
+      rirMin: 3, rirMax: 4,
       warmup: 'Cinta 3′ progresiva (5 → 6,5 km/h) · 10 sentadillas sin peso · círculos de brazos. ~4′.',
       notes: 'RIR 3-4 en todo. Si dudás entre dos pesos, el menor. 2 vueltas la primera sesión, 3 en adelante. Descansos 45-60″ entre ejercicios, 90″ al cerrar cada vuelta.',
       blocks: [
@@ -35,6 +36,7 @@ window.GYM_SEED = (function () {
       name: 'Fase 2 · Día 1 · Piernas + core',
       subtitle: 'Series · ~27′',
       active: false,
+      rirMin: 2, rirMax: 3,
       warmup: 'Cinta 5′: 0-2′ suave (5-5,5 km/h) · 2-4′ rápida (6-7 km/h, +2-4 %) · 4-5′ mantener · 10 sentadillas sin peso.',
       notes: 'Semanas 3-4: RIR 2-3. Semana 5 en adelante: RIR 1-2. Si venís justo de tiempo recortá plancha, nunca sentadilla.',
       blocks: [
@@ -54,6 +56,7 @@ window.GYM_SEED = (function () {
       name: 'Fase 2 · Día 2 · Torso',
       subtitle: 'Supersets · ~29′',
       active: false,
+      rirMin: 2, rirMax: 3,
       warmup: 'Cinta 5′ igual al Día 1; el último minuto: círculos de brazos y rotaciones de hombro.',
       notes: 'En cada ronda del superset B: remo derecha → remo izquierda → press → descanso.',
       blocks: [
@@ -85,6 +88,7 @@ window.GYM_SEED = (function () {
       name: 'Alternativa · Full body A',
       subtitle: 'Sentadilla + empuje/tracción · ~28′',
       active: false,
+      rirMin: 2, rirMax: 3,
       warmup: 'Cinta 5′ progresiva + 10 sentadillas sin peso + 1 serie liviana del primer ejercicio.',
       notes: 'Propuesta para fuerza y salud: 3 veces por semana alternando A-B-A / B-A-B. Sentadilla y peso muerto en 6-10 reps con descanso largo; el resto en 8-12.',
       blocks: [
@@ -114,6 +118,7 @@ window.GYM_SEED = (function () {
       name: 'Alternativa · Full body B',
       subtitle: 'Bisagra + press/remo + carry · ~28′',
       active: false,
+      rirMin: 2, rirMax: 3,
       warmup: 'Cinta 5′ progresiva + 10 buenos días sin peso + círculos de brazos.',
       notes: 'Farmer carry: caminá 30-40″ con una mancuerna pesada en cada mano, tronco firme. Si no hay lugar, marchá en el lugar.',
       blocks: [
@@ -143,6 +148,7 @@ window.GYM_SEED = (function () {
       name: 'Fase 3 · Upper A',
       subtitle: '4 días/sem · torso, énfasis horizontal · ~27′',
       active: false,
+      rirMin: 1, rirMax: 2,
       warmup: 'Cinta 5′ progresiva + círculos de brazos y rotaciones de hombro + 1 serie liviana del primer superset.',
       notes: 'Semana: Upper A · Lower A · (descanso) · Upper B · Lower B. Mínimo 48 h entre los dos días de torso. RIR objetivo 2; el cierre se recorta primero si falta tiempo. Descarga (mitad de series) cada 6-8 semanas.',
       blocks: [
@@ -159,6 +165,7 @@ window.GYM_SEED = (function () {
       name: 'Fase 3 · Lower A',
       subtitle: '4 días/sem · piernas, énfasis sentadilla · ~29′',
       active: false,
+      rirMin: 1, rirMax: 2,
       warmup: 'Cinta 5′ progresiva + 10 sentadillas sin peso + 1-2 series de aproximación de sentadilla (50 % y 75 % del peso de trabajo).',
       notes: 'Sentadilla pesada primero (5-8 reps, RIR 2, nunca menos de 1). Peso muerto rumano moderado. Mínimo 48 h antes de Lower B.',
       blocks: [
@@ -173,6 +180,7 @@ window.GYM_SEED = (function () {
       name: 'Fase 3 · Upper B',
       subtitle: '4 días/sem · torso, énfasis vertical · ~27′',
       active: false,
+      rirMin: 1, rirMax: 2,
       warmup: 'Cinta 5′ progresiva + círculos de brazos y rotaciones de hombro + 1 serie liviana del primer superset.',
       notes: 'Jalón y press militar pesados (6-10). Banco inclinado o flexiones y remo con apoyo moderados. El cierre se recorta primero.',
       blocks: [
@@ -189,6 +197,7 @@ window.GYM_SEED = (function () {
       name: 'Fase 3 · Lower B',
       subtitle: '4 días/sem · piernas, énfasis bisagra · ~29′',
       active: false,
+      rirMin: 1, rirMax: 2,
       warmup: 'Cinta 5′ progresiva + 10 buenos días sin peso + 1-2 series de aproximación de peso muerto.',
       notes: 'Peso muerto rumano pesado primero (5-8 reps, RIR 2, nunca menos de 1). Sentadilla goblet o búlgara moderada. Puente de glúteo + farmer carry para cerrar.',
       blocks: [

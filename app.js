@@ -9,7 +9,7 @@
 
   /* ================= Estado y persistencia ================= */
   function defaults() {
-    return { version: 1, routines: [], sessions: [], settings: { sound: true, vibrate: true, wakeLock: true, voice: false, theme: 'system' } };
+    return { version: 1, routines: [], sessions: [], settings: { sound: true, vibrate: true, wakeLock: true, voice: false, theme: 'system', lastRoutineId: null } };
   }
   function load() {
     try {
@@ -17,7 +17,9 @@
       if (raw) {
         const d = JSON.parse(raw);
         const base = defaults();
-        return Object.assign(base, d, { settings: Object.assign(base.settings, d.settings || {}) });
+        const out = Object.assign(base, d, { settings: Object.assign(base.settings, d.settings || {}) });
+        if (migrateRoutines(out.routines)) persist(out);
+        return out;
       }
     } catch (e) { /* datos corruptos: se ignoran */ }
     const d = defaults();
@@ -26,12 +28,24 @@
     persist(d);
     return d;
   }
+  /* Rutinas guardadas antes de que existiera el RIR objetivo: se toma el de la rutina de ejemplo con el mismo id, o 2-3. */
+  function migrateRoutines(routines) {
+    let seed = null, changed = false;
+    (routines || []).forEach(r => {
+      if (r.rirMin != null && r.rirMax != null) return;
+      seed = seed || window.GYM_SEED().routines;
+      const s = seed.find(x => x.id === r.id);
+      r.rirMin = s ? s.rirMin : 2; r.rirMax = s ? s.rirMax : 3; changed = true;
+    });
+    return changed;
+  }
   function persist(d) { try { localStorage.setItem(KEY, JSON.stringify(d || data)); } catch (e) { toast('No se pudo guardar (almacenamiento lleno o bloqueado)'); } }
   function loadLive() {
     try {
       const l = JSON.parse(localStorage.getItem(LIVE) || 'null');
       if (l && l.phase === 'rest') l.phase = 'exercise'; // versiones anteriores tenían una pantalla de descanso aparte
       if (l && l.sw && l.sw.total == null) l.sw = null; // cronómetro viejo, reemplazado por la cuenta regresiva
+      if (l && !l.rir) l.rir = { min: 2, max: 3 }; // sesión empezada antes de la guía de progresión
       return l;
     } catch (e) { return null; }
   }
@@ -65,7 +79,7 @@
   }
   const feelChip = rir => { const f = L.feel(rir); return f ? '<span class="dot ' + f.cls + '" title="' + esc(f.label) + '"></span>' : ''; };
   const feelText = rir => { const f = L.feel(rir); return f ? f.label : 'sin sensación'; };
-  const feelBtn = (f, on, act) => '<button class="feel ' + f.cls + (on ? ' on' : '') + '" data-act="' + act + '" data-rir="' + f.rir + '" title="' + esc(f.hint) + '"><span class="lbl">' + f.label + '</span><span class="rir">RIR ' + (f.rir === 4 ? '4+' : f.rir) + '</span></button>';
+  const feelBtn = (f, on, act, target) => '<button class="feel ' + f.cls + (on ? ' on' : '') + (target ? ' target' : '') + '" data-act="' + act + '" data-rir="' + f.rir + '" title="' + esc(f.hint) + '"><span class="lbl">' + f.label + '</span><span class="rir">RIR ' + (f.rir === 4 ? '4+' : f.rir) + '</span></button>';
   function setChip(set, extraCls) {
     return '<span class="setchip ' + (extraCls || '') + '">' + esc(L.fmtSet(set)) + (set.perSide ? '<span class="muted small">/lado</span>' : '') + feelChip(set.rir) + '</span>';
   }
@@ -122,7 +136,9 @@
   function renderHome() {
     const t = today();
     const st = L.stats(data.sessions, t);
-    const next = L.suggestNext(data.routines, data.sessions);
+    /* Próxima sesión: la última rutina que empezaste. Si no hay (datos viejos), la de la última sesión guardada; si no, se sugiere entre las activas. */
+    const lastDone = L.sortSessions(data.sessions).find(s => s.routineId);
+    const next = byId(data.routines, data.settings.lastRoutineId) || (lastDone && byId(data.routines, lastDone.routineId)) || L.suggestNext(data.routines, data.sessions);
     const recent = L.sortSessions(data.sessions).slice(0, 5);
     let html = '<div class="screen">' + topbar('Gimnasio', '<span class="date">' + esc(L.fmtDateLong(t)) + '</span>');
     if (live) {
@@ -133,7 +149,7 @@
       const last = L.lastSessionOf(next.id, data.sessions);
       const sum = L.routineSummary(next);
       html += '<div class="card"><div class="eyebrow">Próxima sesión</div><h2 class="h2">' + esc(next.name) + '</h2>' +
-        '<p class="muted">' + esc(next.subtitle || '') + (next.subtitle ? ' · ' : '') + sum.exercises + ' ejercicios · ' + sum.sets + ' series' +
+        '<p class="muted">' + esc(next.subtitle || '') + (next.subtitle ? ' · ' : '') + sum.exercises + ' ejercicios · ' + sum.sets + ' series · ' + esc(L.rirLabel({ min: next.rirMin, max: next.rirMax })) +
         (last ? ' · última vez ' + esc(L.relDate(last.date, t)) : ' · todavía no la hiciste') + '</p>' +
         '<button class="btn primary big" data-act="startRoutine" data-id="' + esc(next.id) + '">Empezar</button>' +
         '<button class="btn ghost" data-act="pickRoutine">Elegir otra rutina</button></div>';
@@ -247,11 +263,11 @@
   /* ================= Rutinas ================= */
   function renderRoutines() {
     let html = '<div class="screen">' + topbar('Rutinas', '<button class="btn sm primary" data-act="newRoutine">Nueva</button>');
-    html += '<p class="small muted">Las rutinas activas entran en la sugerencia de «Próxima sesión»: se alternan solas, primero la que hace más tiempo no hacés.</p>';
+    html += '<p class="small muted">En «Hoy» queda fijada la última rutina que empezaste; la cambiás con «Empezar» acá o con «Elegir otra rutina». Las activas solo se usan para sugerir una si todavía no empezaste ninguna.</p>';
     if (!data.routines.length) html += '<div class="empty">No hay rutinas todavía.</div>';
     else html += '<div class="list">' + data.routines.map(r => {
       const sum = L.routineSummary(r);
-      return '<div class="row"><div class="grow"><div class="title">' + esc(r.name) + '</div><div class="sub">' + esc(r.subtitle || '') + (r.subtitle ? ' · ' : '') + sum.exercises + ' ejercicios · ' + sum.sets + ' series</div>' +
+      return '<div class="row"><div class="grow"><div class="title">' + esc(r.name) + '</div><div class="sub">' + esc(r.subtitle || '') + (r.subtitle ? ' · ' : '') + sum.exercises + ' ejercicios · ' + sum.sets + ' series · ' + esc(L.rirLabel({ min: r.rirMin, max: r.rirMax })) + '</div>' +
         '<div class="actions" style="margin-top:8px"><button class="btn sm" data-act="startRoutine" data-id="' + esc(r.id) + '">Empezar</button><button class="btn sm" data-act="editRoutine" data-id="' + esc(r.id) + '">Editar</button>' +
         '<button class="btn sm ' + (r.active ? 'primary' : '') + '" data-act="toggleActive" data-id="' + esc(r.id) + '" aria-pressed="' + (r.active ? 'true' : 'false') + '">' + (r.active ? 'Activa' : 'Inactiva') + '</button></div></div></div>';
     }).join('') + '</div>';
@@ -272,6 +288,8 @@
     html += '<div class="card">' + fld('Nombre', inp('name', r.name, 'text', 'placeholder="Ej.: Fase 2 · Día 1"')) + fld('Subtítulo', inp('subtitle', r.subtitle)) +
       fld('Calentamiento', '<textarea class="input" data-bind="warmup">' + esc(r.warmup) + '</textarea>') +
       fld('Notas', '<textarea class="input" data-bind="notes">' + esc(r.notes) + '</textarea>') +
+      '<div class="grid2">' + fld('Exigencia · RIR mínimo', inp('rirMin', r.rirMin, 'number', 'min="0" max="4"')) + fld('RIR máximo', inp('rirMax', r.rirMax, 'number', 'min="0" max="4"')) + '</div>' +
+      '<p class="small muted">RIR = reps que te quedan al terminar la serie. La guía de progresión evalúa cada serie contra este objetivo: 3-4 al reengancharte, 2-3 después, 1-2 en fases fuertes.</p>' +
       '<label class="check"><input type="checkbox" data-bind="active" ' + (r.active ? 'checked' : '') + '> Activa (entra en la sugerencia de próxima sesión)</label></div>';
     r.blocks.forEach((b, bi) => {
       const p = 'blocks.' + bi + '.';
@@ -306,6 +324,7 @@
     const r = ui.editor.routine;
     r.name = String(r.name || '').trim();
     if (!r.name) { toast('Poné un nombre a la rutina'); return; }
+    r.rirMin = Math.min(4, Math.max(0, Math.round(numOr(r.rirMin, 2)))); r.rirMax = Math.min(4, Math.max(r.rirMin, Math.round(numOr(r.rirMax, r.rirMin))));
     r.blocks.forEach(b => {
       b.name = String(b.name || '').trim() || (b.type === 'circuit' ? 'Circuito' : 'Series');
       b.rounds = Math.max(1, Math.round(numOr(b.rounds, 1)));
@@ -334,8 +353,13 @@
       confirmModal('Ya hay una sesión en curso', 'Si empezás otra se descarta la sesión en curso (' + live.routineName + ').', 'Empezar igual', () => { live = null; persistLive(); closeModal(); startRoutine(id); }, true);
       return;
     }
+    /* RIR objetivo de la sesión: el de la fase; si volvés después de 5 o más días, esa sesión va a RIR 3 (regla del programa). */
+    const lastAny = L.sortSessions(data.sessions)[0];
+    const away = lastAny ? L.daysBetween(L.parseDate(lastAny.date), new Date()) : null;
+    const rir = away != null && away >= 5 ? { min: 3, max: 4, absence: away } : { min: r.rirMin != null ? r.rirMin : 2, max: r.rirMax != null ? r.rirMax : 3 };
     live = { id: L.uid('s'), routineId: r.id, routineName: r.name, routine: L.clone(r), rounds: r.blocks.map(b => b.rounds || 1), queue: [], idx: 0, phase: 'start',
-      startedAt: new Date().toISOString(), sets: [], skipped: [], rest: null, draft: null, sw: null, note: '' };
+      startedAt: new Date().toISOString(), sets: [], skipped: [], rest: null, draft: null, sw: null, note: '', rir, lastEval: null };
+    data.settings.lastRoutineId = r.id; persist();
     ui.inSession = true; persistLive(); render();
   }
   function beginExercises() {
@@ -370,12 +394,6 @@
     live.draft = { stepIndex: live.idx, load, reps, rir };
     return live.draft;
   }
-  function summarizeFeel(sets) {
-    const withF = sets.filter(s => s.rir != null);
-    if (!withF.length) return 'sin sensación registrada';
-    const f = L.feel(Math.min.apply(null, withF.map(s => s.rir)));
-    return '<span class="feelline">' + feelChip(f.rir) + 'peor serie: ' + f.label + ' · ' + f.hint + '</span>';
-  }
   function whereLabel(step) {
     const block = live.routine.blocks[step.block];
     return block.type === 'circuit' ? 'vuelta ' + step.round + '/' + step.roundsTotal + ' · ejercicio ' + (step.ex + 1) + '/' + block.exercises.length : 'serie ' + step.setNo + '/' + step.setsTotal;
@@ -396,6 +414,9 @@
     let html = '<div class="session">' + sessionBar('Antes de empezar') + '<div><div class="eyebrow">Sesión</div><h2 class="title-lg">' + esc(r.name) + '</h2></div>';
     if (r.warmup) html += '<div class="card"><div class="eyebrow">Calentamiento</div><p class="warm">' + esc(r.warmup) + '</p></div>';
     if (r.notes) html += '<div class="card flat"><div class="eyebrow">Notas</div><p class="warm">' + esc(r.notes) + '</p></div>';
+    const rr = live.rir;
+    html += '<div class="card"><div class="eyebrow">Exigencia de hoy</div><p><b>' + esc(L.rirLabel(rr)) + '</b> · terminá cada serie pudiendo hacer ' + (rr.min === rr.max ? rr.min : rr.min + ' a ' + rr.max) + ' reps más, con técnica limpia. La guía evalúa cada serie contra esto.</p>' +
+      (rr.absence ? '<p class="small warn-text">Volvés después de ' + rr.absence + ' días: hoy todo a RIR 3, sin buscar récords (la fase pide ' + esc(L.rirLabel({ min: r.rirMin, max: r.rirMax })) + '). Vale solo para esta sesión.</p>' : '') + '</div>';
     html += '<div class="card"><div class="eyebrow">Hoy</div><div class="blocks">' + r.blocks.map((b, bi) =>
       '<div class="block-row"><div class="grow"><b>' + esc(b.name) + '</b><div class="small muted">' + esc(b.exercises.map(e => e.name).join(' · ')) + '</div></div>' +
       (b.type === 'circuit' ? '<div class="mini-stepper"><button data-act="rounds" data-bi="' + bi + '" data-d="-1" aria-label="Menos vueltas">−</button><b>' + live.rounds[bi] + '</b><button data-act="rounds" data-bi="' + bi + '" data-d="1" aria-label="Más vueltas">+</button></div>' : '') + '</div>').join('') +
@@ -406,19 +427,26 @@
   function renderExercise() {
     const step = currentStep(); const ex = stepExercise(step); const d = ensureDraft();
     const hist = L.exerciseHistory(data.sessions, step.key, { limit: 3 });
-    const hint = L.progressionHint(ex, hist);
     const todaySets = live.sets.filter(s => s.key === step.key && s.stepIndex !== live.idx).sort((a, b) => a.stepIndex - b.stepIndex);
+    const nth = live.sets.filter(s => s.key === step.key && s.stepIndex < live.idx).length;
+    const plan = L.exercisePlan(ex, live.rir, hist);
+    const targetReps = L.setTarget(plan, nth);
+    const ref = L.refSet(hist[0], nth);
     const block = live.routine.blocks[step.block];
     let html = '<div class="session">' + sessionBar('Serie ' + (live.idx + 1) + ' de ' + live.queue.length) + progressBar() + (live.rest ? restBar() : '');
+    if (live.lastEval) html += '<div class="eval ' + live.lastEval.kind + '"><span class="eyebrow">Serie anterior · ' + esc(live.lastEval.title) + '</span><div>' + esc(live.lastEval.text) + '</div></div>';
     html += '<div><div class="ex-block">' + esc(block.name) + ' · ' + esc(whereLabel(step)) + '</div><h2 class="ex-name">' + esc(ex.name) + '</h2>' +
       '<div class="ex-meta">' + (ex.note ? '<span>' + esc(ex.note) + '</span>' : '') + '<span>' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + '</span>' +
       (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter && live.idx < live.queue.length - 1 ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div></div>';
-    html += '<div class="card last"><div class="card-head"><span class="eyebrow">Última vez' + (hist[0] ? ' · ' + esc(L.relDate(hist[0].date, today())) : '') + '</span></div>';
-    if (hist[0]) html += '<div class="sets">' + hist[0].sets.map(s => setChip(s)).join('') + '</div><div class="small muted">' + summarizeFeel(hist[0].sets) + '</div>';
-    else html += '<p class="muted">Primera vez que registrás este ejercicio.</p>';
+    const goal = (ex.unit !== 'none' && plan.load != null ? L.fmtLoad(plan.load, ex.unit) + (targetReps != null ? ' × ' : ' · ') : '') + (targetReps != null ? (ex.mode === 'time' ? targetReps + '″' : targetReps) : 'hasta ' + L.rirLabel(live.rir));
+    html += '<div class="card plan ' + plan.kind + '"><div class="card-head"><span class="eyebrow">Objetivo · serie ' + (nth + 1) + ' · ' + esc(L.rirLabel(live.rir)) + '</span>' +
+      (ref ? '<span class="small muted">última vez ' + esc(L.fmtSet(ref)) + (ref.rir != null ? ' · RIR ' + ref.rir : '') + '</span>' : '') + '</div>' +
+      '<div class="plan-goal">' + esc(goal) + '</div><p class="plan-text">' + esc(plan.text) + '</p>';
+    html += '<div class="last"><span class="eyebrow">Última vez' + (hist[0] ? ' · ' + esc(L.relDate(hist[0].date, today())) : '') + '</span>';
+    if (hist[0]) html += '<div class="sets">' + hist[0].sets.map(s => setChip(s)).join('') + '</div>';
+    else html += '<p class="small muted">Primera vez que registrás este ejercicio.</p>';
     if (hist[1]) html += '<div class="small muted">Antes, ' + esc(L.relDate(hist[1].date, today())) + ': ' + hist[1].sets.map(s => esc(L.fmtSet(s))).join(' · ') + '</div>';
-    if (hint) html += '<div class="hint ' + hint.type + '"><b>' + (hint.type === 'up' ? '↑' : hint.type === 'down' ? '↓' : '→') + '</b><span>' + esc(hint.text) + '</span></div>';
-    html += '</div>';
+    html += '</div></div>';
     if (todaySets.length) html += '<div class="last"><span class="eyebrow">Hoy</span><div class="sets">' + todaySets.map(s => setChip(s, 'today')).join('') + '</div></div>';
     html += '<div class="card">';
     if (ex.unit !== 'none') html += '<div class="field"><label>' + (ex.unit === 'ladrillos' ? 'Ladrillos' : 'Peso (kg)') + '</label><div class="stepper"><button data-act="step" data-f="load" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="decimal" step="any" min="0" data-draft="load" value="' + (d.load == null ? '' : d.load) + '" placeholder="' + (ex.target || '') + '"><button data-act="step" data-f="load" data-d="1" aria-label="Más">+</button></div></div>';
@@ -429,7 +457,7 @@
       html += '<div class="field"><label>' + (ex.mode === 'time' ? 'Segundos' : 'Reps') + (ex.perSide ? ' (por lado)' : '') + '</label><div class="stepper"><button data-act="step" data-f="reps" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" step="1" min="0" data-draft="reps" value="' + (d.reps == null ? '' : d.reps) + '" placeholder="' + ex.min + '-' + ex.max + '"><button data-act="step" data-f="reps" data-d="1" aria-label="Más">+</button></div>' +
         (ex.mode === 'time' ? '<button class="btn sm" data-act="countdown">▶ Iniciar cuenta regresiva</button>' : '') + '</div>';
     }
-    html += '<div class="field"><label>¿Cómo se sintió?</label><div class="feels">' + L.FEELS.map(f => feelBtn(f, d.rir === f.rir, 'feel')).join('') + '</div></div>';
+    html += '<div class="field"><label>¿Cómo se sintió? · objetivo ' + esc(L.rirLabel(live.rir)) + '</label><div class="feels">' + L.FEELS.map(f => feelBtn(f, d.rir === f.rir, 'feel', L.effort(f.rir, live.rir) === 'ok')).join('') + '</div></div>';
     html += '</div>';
     html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="saveSet">Guardar serie</button>' +
       '<div class="grid2"><button class="btn sm" data-act="prevStep"' + (live.idx === 0 ? ' disabled' : '') + '>‹ Anterior</button><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Hacer después ↷</button>' +
@@ -446,7 +474,16 @@
     const groups = groupSets(live.sets);
     let html = '<div class="session">' + sessionBar('Resumen') + '<div><div class="eyebrow">Sesión terminada</div><h2 class="title-lg">' + esc(live.routineName) + '</h2>' +
       '<p class="muted">' + L.fmtDuration(Date.now() - new Date(live.startedAt)) + ' · ' + live.sets.length + ' series' + (live.skipped.length ? ' · ' + live.skipped.length + ' saltadas' : '') + '</p></div>';
-    html += '<div class="card">' + (groups.length ? groups.map(g => '<div class="summary-ex"><div class="nm">' + esc(g.name) + '</div><div class="sets">' + g.sets.map(s => setChip(s)).join('') + '</div></div>').join('') : '<p class="muted">No registraste series.</p>') + '</div>';
+    const effs = live.sets.map(s => L.effort(s.rir, live.rir));
+    const cnt = k => effs.filter(e => e === k).length;
+    if (live.sets.length) html += '<div class="card flat"><div class="eyebrow">Exigencia · objetivo ' + esc(L.rirLabel(live.rir)) + '</div><div class="small">' +
+      cnt('ok') + ' series en objetivo · ' + cnt('hard') + ' más al límite · ' + cnt('easy') + ' con margen de sobra' + (cnt(null) ? ' · ' + cnt(null) + ' sin sensación' : '') + '</div></div>';
+    const exByKey = key => { let found = null; live.routine.blocks.forEach(b => b.exercises.forEach(e => { if (!found && L.slug(e.name) === key) found = e; })); return found; };
+    html += '<div class="card">' + (groups.length ? groups.map(g => {
+      const ex = exByKey(g.key); const v = ex ? L.exerciseVerdict(ex, live.rir, g.sets, L.exerciseHistory(data.sessions, g.key, { limit: 2 })) : null;
+      return '<div class="summary-ex"><div class="nm">' + esc(g.name) + '</div><div class="sets">' + g.sets.map(s => setChip(s)).join('') + '</div>' +
+        (v ? '<div class="small muted">' + esc(v.text) + '</div><div class="small verdict ' + v.next.kind + '">Próxima: ' + esc(v.next.short) + '</div>' : '') + '</div>';
+    }).join('') : '<p class="muted">No registraste series.</p>') + '</div>';
     html += '<div class="card"><div class="field"><label>Nota de la sesión (opcional)</label><textarea class="input" data-live="note" placeholder="Cómo te sentiste, dolores, tiempo disponible…">' + esc(live.note) + '</textarea></div></div>';
     html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="saveSession">Guardar sesión</button><div class="actions"><button class="btn sm" data-act="backToExercises">‹ Seguir entrenando</button><button class="btn sm danger" data-act="discardSession">Descartar</button></div></div>';
     return html + '</div>';
@@ -459,6 +496,10 @@
     if (d.reps == null) { toast(ex.mode === 'time' ? 'Anotá los segundos' : 'Anotá las reps'); return; }
     const set = { id: L.uid('x'), key: step.key, name: ex.name, mode: ex.mode, unit: ex.unit, perSide: !!ex.perSide, block: step.block, round: step.round, setNo: step.setNo, setsTotal: step.setsTotal,
       stepIndex: live.idx, load: ex.unit === 'none' ? null : d.load, reps: d.reps, rir: d.rir, t: new Date().toISOString() };
+    const hist = L.exerciseHistory(data.sessions, step.key, { limit: 2 });
+    const nth = live.sets.filter(s => s.key === step.key && s.stepIndex < live.idx).length;
+    const ev = L.evaluateSet(ex, live.rir, set, L.refSet(hist[0], nth), L.setTarget(L.exercisePlan(ex, live.rir, hist), nth));
+    live.lastEval = { title: ex.name + ' · ' + L.fmtSet(set), kind: ev.kind, text: ev.text };
     const i = live.sets.findIndex(s => s.stepIndex === live.idx);
     if (i >= 0) live.sets[i] = set; else live.sets.push(set);
     live.skipped = live.skipped.filter(x => x !== live.idx);
@@ -477,6 +518,7 @@
   function skipStep() {
     if (!live.skipped.includes(live.idx)) live.skipped.push(live.idx);
     live.sets = live.sets.filter(s => s.stepIndex !== live.idx);
+    live.lastEval = null;
     advance(0);
   }
   /* Hacer después: el ejercicio actual (o lo que queda de sus series) pasa detrás del que sigue; sirve cuando el aparato está ocupado.
@@ -494,7 +536,7 @@
     const nm = (step, n) => stepExercise(step).name + (n > 1 ? ' (' + n + ' series)' : '');
     toast('Ahora: ' + nm(r.ahead, r.aheadCount) + ' · después: ' + nm(r.moved, r.movedCount), 3200);
   }
-  function prevStep() { if (live.idx > 0) { live.idx--; live.phase = 'exercise'; live.rest = null; live.draft = null; live.sw = null; persistLive(); render(); } }
+  function prevStep() { if (live.idx > 0) { live.idx--; live.phase = 'exercise'; live.rest = null; live.draft = null; live.sw = null; live.lastEval = null; persistLive(); render(); } }
   /* Fin del descanso (por tiempo u «Omitir»): se saca la barra sin volver a dibujar la pantalla, para no perder lo que se esté tipeando. */
   function endRest() {
     if (!live || !live.rest) return;
@@ -504,7 +546,7 @@
   function saveSession() {
     const started = new Date(live.startedAt);
     data.sessions.push({ id: live.id, date: L.dateStr(started), routineId: live.routineId, routineName: live.routineName, manual: false, startedAt: live.startedAt, endedAt: new Date().toISOString(),
-      sets: live.sets.slice().sort((a, b) => a.stepIndex - b.stepIndex), note: live.note || '' });
+      sets: live.sets.slice().sort((a, b) => a.stepIndex - b.stepIndex), note: live.note || '', rir: { min: live.rir.min, max: live.rir.max } });
     persist();
     live = null; persistLive(); ui.inSession = false; ui.tab = 'home'; ui.view = null;
     render(); toast('Sesión guardada. ¡Bien ahí!');
@@ -638,7 +680,7 @@
     countdown: toggleCountdown,
     saveSession: saveSession,
     /* rutinas */
-    newRoutine: () => { ui.editor = { isNew: true, routine: { id: L.uid('r'), name: '', subtitle: '', active: true, warmup: '', notes: '', blocks: [blankBlock()] } }; ui.view = { name: 'edit' }; render(); },
+    newRoutine: () => { ui.editor = { isNew: true, routine: { id: L.uid('r'), name: '', subtitle: '', active: true, rirMin: 2, rirMax: 3, warmup: '', notes: '', blocks: [blankBlock()] } }; ui.view = { name: 'edit' }; render(); },
     editRoutine: d => { const r = byId(data.routines, d.id); if (!r) return; ui.editor = { isNew: false, routine: L.clone(r) }; ui.view = { name: 'edit' }; render(); },
     toggleActive: d => { const r = byId(data.routines, d.id); if (!r) return; r.active = !r.active; persist(); render(); },
     cancelEdit: () => { ui.editor = null; ui.view = null; render(); },
