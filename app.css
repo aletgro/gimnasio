@@ -196,6 +196,7 @@ button.setchip:active { opacity: .8; }
 .verdict.down { color: var(--bad); }
 .warn-text { color: var(--warn); }
 .feel.target .rir { color: var(--accent); font-weight: 600; }
+.feels.attention .feel:not(.on) { border-color: var(--warn); }
 .count { font-weight: 600; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
 .count.soon { color: var(--warn); }
 .restbar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: var(--r); }

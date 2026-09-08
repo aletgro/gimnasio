@@ -494,6 +494,11 @@
     if (live.sw) { d.reps = Math.min(live.sw.total, swElapsed()); live.sw = null; }
     if (ex.unit !== 'none' && d.load == null) { toast('Anotá la carga'); return; }
     if (d.reps == null) { toast(ex.mode === 'time' ? 'Anotá los segundos' : 'Anotá las reps'); return; }
+    if (d.rir == null) {
+      toast('Anotá cómo se sintió: sin la sensación la guía no puede evaluar la serie', 2600);
+      const f = document.querySelector('.feels'); if (f) { f.classList.add('attention'); if (f.scrollIntoView) f.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      return;
+    }
     const set = { id: L.uid('x'), key: step.key, name: ex.name, mode: ex.mode, unit: ex.unit, perSide: !!ex.perSide, block: step.block, round: step.round, setNo: step.setNo, setsTotal: step.setsTotal,
       stepIndex: live.idx, load: ex.unit === 'none' ? null : d.load, reps: d.reps, rir: d.rir, t: new Date().toISOString() };
     const hist = L.exerciseHistory(data.sessions, step.key, { limit: 2 });
