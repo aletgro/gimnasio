@@ -136,7 +136,15 @@ window.GymLogic = (function () {
     if (rir > target.max) return 'easy';
     return 'ok';
   }
-  function rirLabel(target) { return 'RIR ' + (target.min === target.max ? target.min : target.min + '-' + target.max); }
+  function rirRange(target) { return target.min === target.max ? String(target.min) : target.min + '-' + target.max; }
+  function rirLabel(target) { return 'RIR ' + rirRange(target); }
+  /* RIR objetivo efectivo de un ejercicio: el de la sesión, salvo que el ejercicio tenga un piso propio más alto
+     (sentadilla y peso muerto nunca por debajo de RIR 2 aunque la fase pida 1-2: cuida columna y rodillas). */
+  function exerciseTarget(target, ex) {
+    const floor = ex && ex.rirMin != null && ex.rirMin !== '' ? Number(ex.rirMin) : null;
+    if (!target || floor == null || isNaN(floor) || floor <= target.min) return target;
+    return Object.assign({}, target, { min: floor, max: Math.max(floor, target.max), floor: floor });
+  }
   function loadStepOf(ex) { return ex.step || (ex.unit === 'ladrillos' ? 1 : 2.5); }
   function unitWord(ex, n) { return ex.mode === 'time' ? (n === 1 ? 'segundo' : 'segundos') : (n === 1 ? 'rep' : 'reps'); }
   function stepText(ex, dir) {
@@ -159,7 +167,7 @@ window.GymLogic = (function () {
   function exercisePlan(ex, target, history) {
     const h0 = history && history[0], h1 = history && history[1];
     const u = unitWord(ex), lbl = rirLabel(target), isTime = ex.mode === 'time', hasLoad = ex.unit !== 'none';
-    const rng = target.min + '-' + target.max;
+    const rng = rirRange(target);
     if (!h0) return { kind: 'first', load: hasLoad && ex.target != null ? ex.target : null, reps: ex.min,
       short: (hasLoad ? 'elegí la carga: ' : '') + ex.min + ' ' + u + ' con ' + lbl,
       text: 'Primera vez. ' + (hasLoad ? 'Elegí una carga con la que hagas ' + ex.min + ' ' + u + ' con técnica limpia, terminando con ' + lbl + '. Si dudás entre dos, la menor.' : 'Llegá a ' + ex.min + ' ' + u + ' con buena forma, terminando con ' + lbl + '.') };
@@ -207,7 +215,7 @@ window.GymLogic = (function () {
      kind: good | ok | warn | bad | muted */
   function evaluateSet(ex, target, set, ref, planReps) {
     const parts = []; let kind = 'ok';
-    const u = unitWord(ex), rng = target.min + '-' + target.max;
+    const u = unitWord(ex), rng = rirRange(target);
     if (ref && ex.unit !== 'none' && set.load != null && ref.load != null && set.load !== ref.load) {
       const d = set.load - ref.load;
       parts.push('carga ' + (d > 0 ? '+' : '−') + fmtNum(Math.abs(d)) + (ex.unit === 'kg' ? ' kg' : '') + ' vs. la última vez'); if (d > 0) kind = 'good';
@@ -251,6 +259,42 @@ window.GymLogic = (function () {
     return { text: parts.join(' · '), next };
   }
 
+  /* ---- Actualización de rangos (datos versión 2): rangos más cuidadosos con las articulaciones en las rutinas de ejemplo.
+     Solo cambia un ejercicio si sigue con el rango viejo (no pisa lo que hayas editado); las notas, solo si siguen iguales a las viejas;
+     el motivo del rango y el piso de RIR se completan donde falten. ---- */
+  const RANGE_UPDATES = [
+    { id: 'fase3-upper-a', key: 'banco-plano-con-mancuernas', from: [6, 10], to: [8, 12] },
+    { id: 'fase3-lower-a', key: 'sentadilla', from: [5, 8], to: [6, 10] },
+    { id: 'fase3-upper-b', key: 'press-militar-con-mancuernas', from: [6, 10], to: [8, 12] },
+    { id: 'fase3-lower-b', key: 'peso-muerto-rumano', from: [5, 8], to: [6, 10] }
+  ];
+  const NOTES_BEFORE = {
+    'alt-a': 'Propuesta para fuerza y salud: 3 veces por semana alternando A-B-A / B-A-B. Sentadilla y peso muerto en 6-10 reps con descanso largo; el resto en 8-12.',
+    'fase3-lower-a': 'Sentadilla pesada primero (5-8 reps, RIR 2, nunca menos de 1). Peso muerto rumano moderado. Mínimo 48 h antes de Lower B.',
+    'fase3-upper-b': 'Jalón y press militar pesados (6-10). Banco inclinado o flexiones y remo con apoyo moderados. El cierre se recorta primero.',
+    'fase3-lower-b': 'Peso muerto rumano pesado primero (5-8 reps, RIR 2, nunca menos de 1). Sentadilla goblet o búlgara moderada. Puente de glúteo + farmer carry para cerrar.'
+  };
+  function flatExercises(r) { const out = []; (r.blocks || []).forEach(b => (b.exercises || []).forEach(e => out.push(e))); return out; }
+  function applyRangeUpdates(routines, seedRoutines) {
+    let changed = false;
+    (routines || []).forEach(r => {
+      const exs = flatExercises(r);
+      RANGE_UPDATES.filter(c => c.id === r.id).forEach(c => exs.forEach(e => {
+        if (slug(e.name) === c.key && e.min === c.from[0] && e.max === c.from[1]) { e.min = c.to[0]; e.max = c.to[1]; changed = true; }
+      }));
+      const s = (seedRoutines || []).find(x => x.id === r.id);
+      if (!s) return;
+      if (NOTES_BEFORE[r.id] && r.notes === NOTES_BEFORE[r.id] && s.notes !== r.notes) { r.notes = s.notes; changed = true; }
+      const seedExs = flatExercises(s);
+      exs.forEach(e => {
+        const se = seedExs.find(x => slug(x.name) === slug(e.name)); if (!se) return;
+        if (e.why == null && se.why) { e.why = se.why; changed = true; }
+        if (e.rirMin == null && se.rirMin != null) { e.rirMin = se.rirMin; changed = true; }
+      });
+    });
+    return changed;
+  }
+
   /* ---- Sugerir próxima rutina: entre las activas, la que hace más tiempo no se hace ---- */
   function suggestNext(routines, sessions) {
     const active = routines.filter(r => r.active);
@@ -286,7 +330,8 @@ window.GymLogic = (function () {
 
   const api = { FEELS, feel, slug, uid, clone, dateStr, parseDate, addDays, startOfWeek, daysBetween, DAYS, DAYS_SHORT, MONTHS,
     fmtDateLong, fmtDateShort, relDate, fmtTime, fmtNum, fmtLoad, unitLabel, fmtReps, fmtSet, fmtSecs, fmtDuration, rangeLabel,
-    buildQueue, postponeStep, routineSummary, sortSessions, exerciseHistory, effort, rirLabel, refSet, exercisePlan, setTarget, evaluateSet, exerciseVerdict, suggestNext, lastSessionOf, stats };
+    buildQueue, postponeStep, routineSummary, sortSessions, exerciseHistory, effort, rirRange, rirLabel, exerciseTarget, refSet, exercisePlan, setTarget, evaluateSet, exerciseVerdict,
+    applyRangeUpdates, suggestNext, lastSessionOf, stats };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   return api;
 })();

@@ -1,0 +1,154 @@
+% Rangos de repeticiones por ejercicio: estímulo alto con articulaciones cuidadas.
+% Compilar: pdflatex rangos-de-repeticiones.tex (dos veces).
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage[protrusion=true,expansion=false]{microtype}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{ink}{HTML}{14171C}
+\definecolor{accent}{HTML}{2563EB}
+\definecolor{muted}{HTML}{5C6472}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\rango}[1]{\textbf{#1}}
+\newcommand{\seg}{\textquotedbl}
+\setlist{nosep, leftmargin=*}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\parskip}{4pt}
+\setlength{\tabcolsep}{4pt}
+\setlength{\parindent}{0pt}
+
+\title{\textbf{Rangos de repeticiones por ejercicio}\\[4pt]\large Estímulo alto con articulaciones cuidadas}
+\author{Gimnasio · guía de doble progresión}
+\date{11 de septiembre de 2026}
+
+\begin{document}
+\maketitle
+
+\section{Criterio}
+
+El objetivo es un estímulo suficiente para ganar fuerza y masa muscular con un riesgo de lesión bajo, cuidando en particular hombro, columna lumbar y rodillas, que concentran la mayoría de las lesiones en el entrenamiento con pesas \cite{keogh2017,kolber2010}. Para eso se mueven tres palancas:
+
+\begin{enumerate}
+  \item \textbf{Rango de repeticiones.} Fija cuánta carga por repetición se usa. La hipertrofia es prácticamente igual en todo el espectro de 6 a 30 repeticiones si las series terminan cerca del fallo \cite{schoenfeld2017,schoenfeld2021,lopez2021}; lo que cambia es la carga que soportan articulaciones y tendones, que crece con el peso en la barra \cite{escamilla2001,cholewicki1991}. Las series de 1 a 5 repeticiones ganan más fuerza máxima, pero exigen cargas de 85 a 100~\% del máximo, y ese es justamente el terreno donde suben las lesiones en los deportes de fuerza \cite{keogh2017}. Por encima de 15 a 20 repeticiones el estímulo depende de llegar al fallo y la técnica se degrada. La ventana útil queda entre 6 y 15, que coincide con la recomendación clásica de 8 a 12 al 70 a 85~\% para hipertrofia en principiantes e intermedios \cite{acsm2009}.
+  \item \textbf{RIR (repeticiones en reserva).} Terminar las series con 1 a 3 repeticiones de margen rinde casi lo mismo que ir al fallo, con menos fatiga y menos series con técnica rota \cite{refalo2023,grgic2022,helms2016}. En los compuestos que cargan la columna (sentadilla, peso muerto) el piso es RIR~2.
+  \item \textbf{Técnica y tempo.} Bajada controlada (2 a 3 segundos), sin rebote, recorrido completo pero sin dolor. Los tendones se adaptan más lento que el músculo \cite{magnusson2019}: al volver a entrenar, más repeticiones con menos peso.
+\end{enumerate}
+
+Con ese criterio, las reglas por tipo de ejercicio quedan así (la carga aproximada es la que corresponde a terminar con RIR~2):
+
+\begin{longtable}{L{4.3cm} L{1.6cm} L{1.8cm} L{7.4cm}}
+\toprule
+\textbf{Tipo de ejercicio} & \textbf{Rango} & \textbf{Carga aprox.} & \textbf{Por qué} \\
+\midrule
+\endhead
+Compuesto de pierna, día pesado (sentadilla con barra, peso muerto rumano) & \rango{6--10} & 70--80~\% & Fuerza e hipertrofia completas sin el pico de compresión y cizalla lumbar ni de carga patelofemoral de las series de 1 a 5. La técnica se sostiene toda la serie. Piso RIR~2. \\
+Compuesto de pierna, día moderado o reenganche (goblet, rumano con mancuernas) & \rango{8--12} & 65--75~\% & Mismo estímulo con menos kilos absolutos; deja recuperar entre día pesado y día pesado. \\
+Unilateral de pierna (estocadas, búlgara) & \rango{8--12} por pierna & baja & La carga externa es chica y la rodilla trabaja estable; se progresa por repeticiones antes que por kilos. \\
+Empujes (banco plano e inclinado, press militar) & \rango{8--12} & 65--75~\% & El hombro es la articulación más lesionada del gimnasio \cite{kolber2010}; 8 a 12 evita cargas máximas con el brazo en abducción y rotación externa. Pectoral y deltoides crecen igual. \\
+Empujes en reenganche & \rango{10--15} & 60--70~\% & Readaptar hombro y codo con peso liviano las primeras semanas. \\
+Tracción principal del día (remo a 1 mano, jalón) & \rango{6--10} & 70--80~\% & El hombro trabaja retraído y estable, sin pinzamiento; el dorsal tolera carga alta y el apoyo en el banco protege la lumbar. \\
+Tracciones secundarias & \rango{8--12} & 65--75~\% & Cuida codo (epicondilitis medial) y tendón del bíceps sin perder estímulo. \\
+Hombro aislado (elevaciones laterales y posteriores, face pull) & \rango{12--15} & 60--70~\% & Músculos chicos con palanca larga y el tendón del supraespinoso en juego; con más peso lo hacen el trapecio y el impulso, no el deltoides. \\
+Brazos (curl, tríceps en polea) & \rango{10--15} & 60--70~\% & Tendones del codo; con carga alta se pierde la técnica (balanceo) sin ganar estímulo. \\
+Glúteo accesorio (puente) & \rango{10--15} & moderada & La cadera tolera muy bien la carga en rango medio y no hay compresión de columna. \\
+Core isométrico (plancha, plancha lateral) & \rango{20--45\seg} & peso corporal & Se progresa por tiempo; columna neutra, sin flexión repetida bajo carga. \\
+Carry & \rango{30--40\seg} & moderada-alta & Carga axial con tronco firme; se suben kilos solo si la postura es perfecta. \\
+\bottomrule
+\end{longtable}
+
+Regla corta: \textbf{nunca menos de 6 repeticiones con carga}. Por debajo, la carga articular sube mucho más que el estímulo.
+
+\section{Rango de cada ejercicio}
+
+\begin{longtable}{L{3.0cm} L{3.0cm} L{2.1cm} L{2.0cm} L{4.8cm}}
+\toprule
+\textbf{Ejercicio} & \textbf{Rutinas} & \textbf{Rango} & \textbf{Cuida} & \textbf{Motivo} \\
+\midrule
+\endhead
+Sentadilla (barra o goblet) & Fase 3 Lower A (4 series, 120\seg), Alt.\ A & \rango{6--10}, RIR~$\geq$~2 & lumbar, rodilla & Compuesto principal: 70 a 80~\% del máximo alcanza para fuerza e hipertrofia; series de aproximación al 50 y 75~\% antes. \\
+Sentadilla & Fase 1, Fase 2 Día 1 & \rango{8--12} & lumbar, rodilla & Reenganche y día moderado: menos kilos absolutos mientras tendones y articulaciones se readaptan. \\
+Sentadilla goblet (o búlgara) & Fase 3 Lower B & \rango{8--12} & rodilla & Segundo ejercicio de pierna del día: carga moderada, mancuerna adelante mantiene el tronco vertical. \\
+Peso muerto rumano & Fase 3 Lower B (4 series, 120\seg), Alt.\ B & \rango{6--10}, RIR~$\geq$~2 & lumbar, isquios & Bisagra principal: por debajo de 6 la carga y la cizalla lumbar suben mucho más que el estímulo \cite{cholewicki1991}. \\
+Peso muerto rumano & Fase 1, Fase 2 Día 1, Fase 3 Lower A & \rango{8--12} & lumbar, isquios & Día moderado o reenganche: carga lumbar contenida; los isquios responden muy bien a este rango. \\
+Estocadas / estocada hacia atrás & Fase 2 Día 1, Fase 3 Lower A & \rango{8--12} por pierna & rodilla & Carga externa baja, rodilla estable; primero sin peso, mancuernas cuando 12 salen fáciles. \\
+Banco plano con mancuernas & Fase 1, Fase 2 Día 2 & \rango{10--15} & hombro, codo & Reenganche del empuje con peso liviano. \\
+Banco plano con mancuernas & Alt.\ A, Fase 3 Upper A & \rango{8--12} & hombro & Las mancuernas permiten una trayectoria natural del hombro; 8 a 12 evita cargas máximas en la posición más vulnerable. \\
+Banco inclinado con mancuernas (o flexiones) & Fase 3 Upper B & \rango{8--12} & hombro & Igual que el plano; la inclinación acerca el brazo a la posición de riesgo, por eso no se baja de 8. \\
+Press militar con mancuernas & Fase 2 Día 2, Alt.\ B, Fase 3 Upper A y B & \rango{8--12} & hombro (espacio subacromial) & El press por encima de la cabeza es el gesto de más riesgo para el hombro \cite{kolber2010}; nunca por debajo de 8. \\
+Jalón dorsal & Fase 3 Upper B (principal) & \rango{6--10} & hombro, codo & Tracción principal: hombro retraído y estable, dorsal tolera carga alta. Sin tirones ni balanceo. \\
+Jalón dorsal & Fase 2 Día 2, Alt.\ A, Fase 3 Upper A & \rango{8--12} & codo & Tracción secundaria: cuida codo y tendón del bíceps. \\
+Remo a 1 mano & Fase 3 Upper A (principal) & \rango{6--10} & lumbar (apoyada) & Con la mano y la rodilla apoyadas la lumbar queda protegida; se puede cargar alto. \\
+Remo a 1 mano & Fase 1, Fase 2 Día 2, Alt.\ B & \rango{8--12} & codo & Estímulo completo para dorsal y espalda alta con carga moderada. \\
+Remo con apoyo en banco & Fase 3 Upper B & \rango{8--12} & lumbar, codo & Pecho apoyado: cero carga lumbar; 8 a 12 protege el codo. \\
+Elevaciones laterales & Fase 1, Fase 2 Día 2, Fase 3 Upper B & \rango{12--15} & supra\-espinoso & Palanca larga sobre un tendón chico; poco peso y control. \\
+Face pull (o posteriores) & Fase 3 Upper A & \rango{12--15} & manguito rotador & Salud de hombro, no fuerza: carga liviana, codos altos, pausa atrás. \\
+Curl de bíceps & Fase 2 Día 2, Fase 3 Upper A & \rango{10--15} & codo & Tendón distal del bíceps y epicóndilo: liviano y sin balanceo. \\
+Extensión de tríceps en polea & Fase 3 Upper B & \rango{12--15} & codo & Igual que el curl: el codo no gana nada con carga alta. \\
+Puente de glúteo & Fase 3 Lower B & \rango{10--15} & cadera & Muy seguro; mancuerna sobre la cadera, pausa arriba. \\
+Plancha / plancha lateral & Fase 1, Fase 2 Día 1 / Alt.\ A, Fase 3 Lower A & \rango{20--45\seg} / \rango{20--40\seg} por lado & columna & Isométrico: se progresa por segundos; columna neutra sin compresión extra. \\
+Farmer carry & Alt.\ B, Fase 3 Lower B & \rango{30--40\seg} & columna, agarre & Carga axial con tronco firme; kilos solo si los 40\seg\ salen con postura perfecta. \\
+\bottomrule
+\end{longtable}
+
+\section{Qué cambió respecto de las rutinas anteriores}
+
+\begin{longtable}{L{3.4cm} L{4.4cm} L{2.4cm} L{4.4cm}}
+\toprule
+\textbf{Rutina} & \textbf{Ejercicio} & \textbf{Antes} & \textbf{Ahora} \\
+\midrule
+\endhead
+Fase 3 · Lower A & Sentadilla & 5--8 & \rango{6--10}, piso RIR~2 \\
+Fase 3 · Lower B & Peso muerto rumano & 5--8 & \rango{6--10}, piso RIR~2 \\
+Fase 3 · Upper A & Banco plano con mancuernas & 6--10 & \rango{8--12} \\
+Fase 3 · Upper B & Press militar con mancuernas & 6--10 & \rango{8--12} \\
+Fase 2 Día 1, Alt.\ A y B, Fase 3 Lower A y B & Sentadilla, sentadilla goblet y peso muerto rumano & RIR de la fase (1--2 en Fase 3) & piso propio de \rango{RIR~2}, aunque la fase pida 1--2 \\
+\bottomrule
+\end{longtable}
+
+El resto de los rangos ya cumplía el criterio y no cambia. Las series de 5 a 8 desaparecen: en sentadilla y peso muerto la diferencia de fuerza entre 5--8 y 6--10 es mínima, y la de carga sobre columna y rodillas no. Los empujes pesados a 6--10 pasan a 8--12 porque el hombro es la articulación que más se lesiona en el gimnasio y el pectoral crece lo mismo. Las tracciones principales conservan el 6--10 porque el hombro trabaja retraído y estable y el dorsal tolera carga alta.
+
+\section{Cómo lo aplica la app}
+
+\begin{itemize}
+  \item \textbf{Doble progresión dentro del rango.} Con el mismo peso se suman repeticiones hasta el tope del rango; cuando dos sesiones seguidas llegan al tope en todas las series sin pasarse del RIR, sube la carga y se vuelve al piso. Un rango de 4 repeticiones (6--10, 8--12) da varias sesiones de progreso entre salto y salto de peso, con saltos chicos (1~kg en mancuernas, 2,5~kg en barra).
+  \item \textbf{Piso de RIR por ejercicio.} Sentadilla y peso muerto tienen RIR~2 mínimo propio: la guía evalúa esas series contra ese piso aunque la rutina pida 1--2, y lo avisa en la pantalla previa a la sesión. Se edita por ejercicio (campo «RIR mínimo propio»).
+  \item \textbf{Motivo visible.} Debajo del nombre del ejercicio aparece en una línea por qué tiene ese rango; se edita en la rutina.
+  \item \textbf{Aviso al editar.} Si se guarda un ejercicio por repeticiones con mínimo menor que 6, la app avisa; no lo impide.
+  \item \textbf{Guía de rangos} en la pestaña Rutinas, con la tabla de la sección 1 resumida.
+  \item \textbf{Teléfonos ya instalados.} Al abrir la versión nueva, los cuatro rangos cambiados se actualizan solos si seguían con el valor anterior (lo editado a mano no se toca), y se completan motivo y piso de RIR. También se puede usar Datos → Restaurar rutinas de ejemplo, que ahora reemplaza las de ejemplo por la versión actual.
+\end{itemize}
+
+\section{Reglas prácticas}
+
+\begin{itemize}
+  \item En sentadilla y peso muerto pesados, 1 o 2 series de aproximación (50 y 75~\% del peso de trabajo) antes de la primera serie.
+  \item Si una articulación duele en un ejercicio, subir el rango (más repeticiones, menos kilos) antes que abandonarlo; si el dolor persiste más de 48~h o es agudo, consultar.
+  \item Nunca RIR~0 en compuestos. En aislamiento (laterales, curl, tríceps) llegar a RIR~0 o 1 alguna serie es aceptable.
+  \item Descarga (mitad de series) cada 6 a 8 semanas, como ya indica la Fase 3.
+  \item Este documento resume el consenso actual y la lógica del programa; no reemplaza la evaluación de un profesional, sobre todo con dolor o lesión previa.
+\end{itemize}
+
+\begin{thebibliography}{99}\footnotesize
+\bibitem{schoenfeld2017} Schoenfeld BJ, Grgic J, Ogborn D, Krieger JW. Strength and hypertrophy adaptations between low- vs. high-load resistance training: a systematic review and meta-analysis. \emph{J Strength Cond Res}. 2017;31(12):3508--3523.
+\bibitem{schoenfeld2021} Schoenfeld BJ, Grgic J, Van Every DW, Plotkin DL. Loading recommendations for muscle strength, hypertrophy, and local endurance: a re-examination of the repetition continuum. \emph{Sports}. 2021;9(2):32.
+\bibitem{lopez2021} Lopez P, Radaelli R, Taaffe DR, et al. Resistance training load effects on muscle hypertrophy and strength gain: systematic review and network meta-analysis. \emph{Med Sci Sports Exerc}. 2021;53(6):1206--1216.
+\bibitem{refalo2023} Refalo MC, Helms ER, Trexler ET, Hamilton DL, Fyfe JJ. Influence of resistance training proximity-to-failure on skeletal muscle hypertrophy: a systematic review with meta-analysis. \emph{Sports Med}. 2023;53(3):649--665.
+\bibitem{grgic2022} Grgic J, Schoenfeld BJ, Orazem J, Sabol F. Effects of resistance training performed to repetition failure or non-failure on muscular strength and hypertrophy: a systematic review and meta-analysis. \emph{J Sport Health Sci}. 2022;11(2):202--211.
+\bibitem{helms2016} Helms ER, Cronin J, Storey A, Zourdos MC. Application of the repetitions in reserve-based rating of perceived exertion scale for resistance training. \emph{Strength Cond J}. 2016;38(4):42--49.
+\bibitem{keogh2017} Keogh JWL, Winwood PW. The epidemiology of injuries across the weight-training sports. \emph{Sports Med}. 2017;47(3):479--501.
+\bibitem{kolber2010} Kolber MJ, Beekhuizen KS, Cheng MS, Hellman MA. Shoulder injuries attributed to resistance training: a brief review. \emph{J Strength Cond Res}. 2010;24(6):1696--1704.
+\bibitem{escamilla2001} Escamilla RF. Knee biomechanics of the dynamic squat exercise. \emph{Med Sci Sports Exerc}. 2001;33(1):127--141.
+\bibitem{cholewicki1991} Cholewicki J, McGill SM, Norman RW. Lumbar spine loads during the lifting of extremely heavy weights. \emph{Med Sci Sports Exerc}. 1991;23(10):1179--1186.
+\bibitem{magnusson2019} Magnusson SP, Kjaer M. The impact of loading, unloading, ageing and injury on the human tendon. \emph{J Physiol}. 2019;597(5):1283--1298.
+\bibitem{acsm2009} American College of Sports Medicine. Progression models in resistance training for healthy adults. \emph{Med Sci Sports Exerc}. 2009;41(3):687--708.
+\end{thebibliography}
+
+\end{document}

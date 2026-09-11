@@ -2,11 +2,34 @@
    Se cargan solo la primera vez (o desde Datos → "Restaurar rutinas de ejemplo"). */
 window.GYM_SEED = (function () {
   const kg = (name, min, max, target, extra) => Object.assign({
-    name, note: '', mode: 'reps', min, max, unit: 'kg', step: 2.5, perSide: false, target, sets: 3, rest: 90
+    name, note: '', why: '', mode: 'reps', min, max, unit: 'kg', step: 2.5, perSide: false, target, sets: 3, rest: 90, rirMin: null
   }, extra || {});
   const time = (name, min, max, extra) => Object.assign({
-    name, note: '', mode: 'time', min, max, unit: 'none', step: 0, perSide: false, target: 0, sets: 3, rest: 45
+    name, note: '', why: '', mode: 'time', min, max, unit: 'none', step: 0, perSide: false, target: 0, sets: 3, rest: 45, rirMin: null
   }, extra || {});
+
+  /* Por qué cada rango (se muestra en la sesión). Criterio: buen estímulo con carga articular contenida.
+     Detalle y referencias en docs/rangos-de-repeticiones.pdf. */
+  const W = {
+    legHeavy: 'Compuesto principal: 6-10 da fuerza e hipertrofia con ~70-80 % del máximo, sin el pico sobre columna y rodillas de las series de 1-5. RIR 2 mínimo.',
+    legMod: 'Compuesto de pierna en día moderado: 8-12 mantiene el estímulo con menos carga absoluta sobre columna y rodillas.',
+    legRe: 'Reenganche: 8-12 con carga moderada mientras tendones y articulaciones se readaptan (tardan más que el músculo).',
+    hingeHeavy: 'Bisagra principal: 6-10 con RIR 2 mínimo; por debajo de 6 la carga y el cizallamiento lumbar suben mucho más que el estímulo.',
+    hingeMod: 'Bisagra en día moderado: 8-12 mantiene la carga lumbar contenida; los isquios responden muy bien a este rango.',
+    hingeRe: 'Reenganche de la bisagra: 8-12 con carga moderada; lumbares e isquios se readaptan antes de cargar más.',
+    unilateral: '8-12 por pierna: la carga es baja y la rodilla trabaja estable; se progresa por reps antes que por kilos.',
+    pressRe: 'Empuje en reenganche: 10-15 con carga liviana para readaptar hombro y codo sin peso alto.',
+    press: 'Empuje: 8-12 evita cargas máximas con el hombro en su posición más vulnerable; el estímulo para pecho es el mismo.',
+    ohp: 'Press vertical: nunca por debajo de 8. El hombro por encima de la cabeza es la articulación de más riesgo del gimnasio.',
+    pullHeavy: 'Tracción principal: el hombro trabaja retraído y estable, por eso tolera 6-10 con carga alta sin riesgo.',
+    pull: 'Tracción: 8-12 cuida codo (epicondilitis) y tendón del bíceps, con estímulo completo para dorsal y espalda.',
+    shoulderIso: 'Aislamiento de hombro: músculo chico y tendón del supraespinoso; 12-15 con poco peso y control es lo que rinde.',
+    facepull: 'Face pull: manguito rotador y trapecio medio con carga liviana; 12-15 es salud de hombro, no fuerza.',
+    arms: 'Brazos: carga liviana y muchas reps protegen los tendones del codo; con más peso se pierde la técnica, no se gana estímulo.',
+    glute: 'Puente de glúteo: la cadera tolera muy bien la carga; 10-15 con pausa arriba es seguro y suficiente.',
+    core: 'Isométrico: se progresa por segundos, no por carga; la columna se mantiene neutra sin compresión extra.',
+    carry: 'Tiempo bajo carga con tronco firme; se suben kilos solo si los 40″ salen con postura perfecta.'
+  };
 
   const routines = [
     {
@@ -21,12 +44,12 @@ window.GYM_SEED = (function () {
         {
           id: 'b1', type: 'circuit', name: 'Circuito', rounds: 3, restBetween: 50, restAfterRound: 90,
           exercises: [
-            kg('Sentadilla', 8, 12, 15, { note: 'barra' }),
-            kg('Banco plano con mancuernas', 10, 15, 7.5, { note: 'c/mano', step: 1 }),
-            kg('Peso muerto rumano', 8, 12, 15, { note: 'barra' }),
-            kg('Remo a 1 mano', 8, 12, 10, { perSide: true, step: 1 }),
-            kg('Elevaciones laterales', 12, 15, 4, { note: 'c/mano', step: 1 }),
-            time('Plancha', 20, 45)
+            kg('Sentadilla', 8, 12, 15, { note: 'barra', why: W.legRe }),
+            kg('Banco plano con mancuernas', 10, 15, 7.5, { note: 'c/mano', step: 1, why: W.pressRe }),
+            kg('Peso muerto rumano', 8, 12, 15, { note: 'barra', why: W.hingeRe }),
+            kg('Remo a 1 mano', 8, 12, 10, { perSide: true, step: 1, why: W.pull }),
+            kg('Elevaciones laterales', 12, 15, 4, { note: 'c/mano', step: 1, why: W.shoulderIso }),
+            time('Plancha', 20, 45, { why: W.core })
           ]
         }
       ]
@@ -43,10 +66,10 @@ window.GYM_SEED = (function () {
         {
           id: 'b1', type: 'straight', name: 'Series', rounds: 1, restBetween: 0, restAfterRound: 0,
           exercises: [
-            kg('Sentadilla', 8, 12, 10, { sets: 3, rest: 90 }),
-            kg('Peso muerto rumano', 8, 12, 10, { note: 'mancuernas, c/mano', sets: 3, rest: 90 }),
-            kg('Estocadas', 8, 12, 0, { note: 'por pierna · sin peso, luego mancuernas', perSide: true, sets: 2, rest: 70, step: 1 }),
-            time('Plancha', 20, 45, { sets: 3, rest: 45 })
+            kg('Sentadilla', 8, 12, 10, { sets: 3, rest: 90, why: W.legMod, rirMin: 2 }),
+            kg('Peso muerto rumano', 8, 12, 10, { note: 'mancuernas, c/mano', sets: 3, rest: 90, why: W.hingeMod, rirMin: 2 }),
+            kg('Estocadas', 8, 12, 0, { note: 'por pierna · sin peso, luego mancuernas', perSide: true, sets: 2, rest: 70, step: 1, why: W.unilateral }),
+            time('Plancha', 20, 45, { sets: 3, rest: 45, why: W.core })
           ]
         }
       ]
@@ -63,22 +86,22 @@ window.GYM_SEED = (function () {
         {
           id: 'b1', type: 'circuit', name: 'Superset A', rounds: 3, restBetween: 0, restAfterRound: 70,
           exercises: [
-            kg('Jalón dorsal', 8, 12, 4, { unit: 'ladrillos', step: 1 }),
-            kg('Banco plano con mancuernas', 10, 15, 6, { note: 'c/mano', step: 1 })
+            kg('Jalón dorsal', 8, 12, 4, { unit: 'ladrillos', step: 1, why: W.pull }),
+            kg('Banco plano con mancuernas', 10, 15, 6, { note: 'c/mano', step: 1, why: W.pressRe })
           ]
         },
         {
           id: 'b2', type: 'circuit', name: 'Superset B', rounds: 3, restBetween: 0, restAfterRound: 75,
           exercises: [
-            kg('Remo a 1 mano', 8, 12, 10, { perSide: true, step: 1 }),
-            kg('Press militar con mancuernas', 8, 12, 5, { note: 'c/mano · parado o sentado', step: 1 })
+            kg('Remo a 1 mano', 8, 12, 10, { perSide: true, step: 1, why: W.pull }),
+            kg('Press militar con mancuernas', 8, 12, 5, { note: 'c/mano · parado o sentado', step: 1, why: W.ohp })
           ]
         },
         {
           id: 'b3', type: 'straight', name: 'Cierre', rounds: 1, restBetween: 0, restAfterRound: 0,
           exercises: [
-            kg('Elevaciones laterales', 12, 15, 4, { note: 'c/mano', sets: 2, rest: 50, step: 1 }),
-            kg('Curl de bíceps', 10, 15, 4, { note: 'opcional si sobra tiempo', sets: 2, rest: 45, step: 1 })
+            kg('Elevaciones laterales', 12, 15, 4, { note: 'c/mano', sets: 2, rest: 50, step: 1, why: W.shoulderIso }),
+            kg('Curl de bíceps', 10, 15, 4, { note: 'opcional si sobra tiempo', sets: 2, rest: 45, step: 1, why: W.arms })
           ]
         }
       ]
@@ -90,25 +113,25 @@ window.GYM_SEED = (function () {
       active: false,
       rirMin: 2, rirMax: 3,
       warmup: 'Cinta 5′ progresiva + 10 sentadillas sin peso + 1 serie liviana del primer ejercicio.',
-      notes: 'Propuesta para fuerza y salud: 3 veces por semana alternando A-B-A / B-A-B. Sentadilla y peso muerto en 6-10 reps con descanso largo; el resto en 8-12.',
+      notes: 'Propuesta para fuerza y salud: 3 veces por semana alternando A-B-A / B-A-B. Sentadilla y peso muerto en 6-10 reps con descanso largo y RIR 2 mínimo; el resto en 8-12.',
       blocks: [
         {
           id: 'b1', type: 'straight', name: 'Principal', rounds: 1, restBetween: 0, restAfterRound: 0,
           exercises: [
-            kg('Sentadilla', 6, 10, 15, { note: 'barra o goblet', sets: 3, rest: 105 })
+            kg('Sentadilla', 6, 10, 15, { note: 'barra o goblet', sets: 3, rest: 105, why: W.legHeavy, rirMin: 2 })
           ]
         },
         {
           id: 'b2', type: 'circuit', name: 'Superset', rounds: 3, restBetween: 0, restAfterRound: 75,
           exercises: [
-            kg('Banco plano con mancuernas', 8, 12, 7.5, { note: 'c/mano', step: 1 }),
-            kg('Jalón dorsal', 8, 12, 4, { unit: 'ladrillos', step: 1 })
+            kg('Banco plano con mancuernas', 8, 12, 7.5, { note: 'c/mano', step: 1, why: W.press }),
+            kg('Jalón dorsal', 8, 12, 4, { unit: 'ladrillos', step: 1, why: W.pull })
           ]
         },
         {
           id: 'b3', type: 'straight', name: 'Core', rounds: 1, restBetween: 0, restAfterRound: 0,
           exercises: [
-            time('Plancha lateral', 20, 40, { note: 'por lado', perSide: true, sets: 2, rest: 30 })
+            time('Plancha lateral', 20, 40, { note: 'por lado', perSide: true, sets: 2, rest: 30, why: W.core })
           ]
         }
       ]
@@ -125,20 +148,20 @@ window.GYM_SEED = (function () {
         {
           id: 'b1', type: 'straight', name: 'Principal', rounds: 1, restBetween: 0, restAfterRound: 0,
           exercises: [
-            kg('Peso muerto rumano', 6, 10, 15, { note: 'barra o mancuernas', sets: 3, rest: 105 })
+            kg('Peso muerto rumano', 6, 10, 15, { note: 'barra o mancuernas', sets: 3, rest: 105, why: W.hingeHeavy, rirMin: 2 })
           ]
         },
         {
           id: 'b2', type: 'circuit', name: 'Superset', rounds: 3, restBetween: 0, restAfterRound: 75,
           exercises: [
-            kg('Press militar con mancuernas', 8, 12, 5, { note: 'c/mano', step: 1 }),
-            kg('Remo a 1 mano', 8, 12, 10, { perSide: true, step: 1 })
+            kg('Press militar con mancuernas', 8, 12, 5, { note: 'c/mano', step: 1, why: W.ohp }),
+            kg('Remo a 1 mano', 8, 12, 10, { perSide: true, step: 1, why: W.pull })
           ]
         },
         {
           id: 'b3', type: 'straight', name: 'Carry', rounds: 1, restBetween: 0, restAfterRound: 0,
           exercises: [
-            time('Farmer carry', 30, 40, { note: 'mancuerna en cada mano', unit: 'kg', target: 12.5, step: 2.5, sets: 3, rest: 60 })
+            time('Farmer carry', 30, 40, { note: 'mancuerna en cada mano', unit: 'kg', target: 12.5, step: 2.5, sets: 3, rest: 60, why: W.carry })
           ]
         }
       ]
@@ -153,11 +176,11 @@ window.GYM_SEED = (function () {
       notes: 'Semana: Upper A · Lower A · (descanso) · Upper B · Lower B. Mínimo 48 h entre los dos días de torso. RIR objetivo 2; el cierre se recorta primero si falta tiempo. Descarga (mitad de series) cada 6-8 semanas.',
       blocks: [
         { id: 'b1', type: 'circuit', name: 'Superset A', rounds: 3, restBetween: 0, restAfterRound: 90,
-          exercises: [ kg('Banco plano con mancuernas', 6, 10, 10, { note: 'c/mano', step: 1 }), kg('Remo a 1 mano', 6, 10, 15, { perSide: true, step: 1 }) ] },
+          exercises: [ kg('Banco plano con mancuernas', 8, 12, 10, { note: 'c/mano', step: 1, why: W.press }), kg('Remo a 1 mano', 6, 10, 15, { perSide: true, step: 1, why: W.pullHeavy }) ] },
         { id: 'b2', type: 'circuit', name: 'Superset B', rounds: 3, restBetween: 0, restAfterRound: 75,
-          exercises: [ kg('Press militar con mancuernas', 8, 12, 7.5, { note: 'c/mano', step: 1 }), kg('Jalón dorsal', 8, 12, 5, { unit: 'ladrillos', step: 1 }) ] },
+          exercises: [ kg('Press militar con mancuernas', 8, 12, 7.5, { note: 'c/mano', step: 1, why: W.ohp }), kg('Jalón dorsal', 8, 12, 5, { unit: 'ladrillos', step: 1, why: W.pull }) ] },
         { id: 'b3', type: 'circuit', name: 'Cierre', rounds: 2, restBetween: 0, restAfterRound: 45,
-          exercises: [ kg('Face pull', 12, 15, 0, { note: 'polea; si no hay, elevaciones posteriores', step: 1 }), kg('Curl de bíceps', 10, 15, 5, { note: 'c/mano', step: 1 }) ] }
+          exercises: [ kg('Face pull', 12, 15, 0, { note: 'polea; si no hay, elevaciones posteriores', step: 1, why: W.facepull }), kg('Curl de bíceps', 10, 15, 5, { note: 'c/mano', step: 1, why: W.arms }) ] }
       ]
     },
     {
@@ -167,12 +190,12 @@ window.GYM_SEED = (function () {
       active: false,
       rirMin: 1, rirMax: 2,
       warmup: 'Cinta 5′ progresiva + 10 sentadillas sin peso + 1-2 series de aproximación de sentadilla (50 % y 75 % del peso de trabajo).',
-      notes: 'Sentadilla pesada primero (5-8 reps, RIR 2, nunca menos de 1). Peso muerto rumano moderado. Mínimo 48 h antes de Lower B.',
+      notes: 'Sentadilla pesada primero (6-10 reps, RIR 2 mínimo: la guía lo aplica aunque la fase pida 1-2). Peso muerto rumano moderado. Mínimo 48 h antes de Lower B.',
       blocks: [
         { id: 'b1', type: 'straight', name: 'Principal', rounds: 1, restBetween: 0, restAfterRound: 0,
-          exercises: [ kg('Sentadilla', 5, 8, 25, { note: 'barra o goblet', sets: 4, rest: 120 }), kg('Peso muerto rumano', 8, 12, 25, { note: 'barra o mancuernas', sets: 3, rest: 90 }) ] },
+          exercises: [ kg('Sentadilla', 6, 10, 25, { note: 'barra o goblet', sets: 4, rest: 120, why: W.legHeavy, rirMin: 2 }), kg('Peso muerto rumano', 8, 12, 25, { note: 'barra o mancuernas', sets: 3, rest: 90, why: W.hingeMod, rirMin: 2 }) ] },
         { id: 'b2', type: 'circuit', name: 'Superset', rounds: 2, restBetween: 0, restAfterRound: 60,
-          exercises: [ kg('Estocada hacia atrás', 8, 12, 0, { note: 'por pierna; mancuernas cuando sea fácil', perSide: true, step: 1 }), time('Plancha lateral', 20, 40, { note: 'por lado', perSide: true }) ] }
+          exercises: [ kg('Estocada hacia atrás', 8, 12, 0, { note: 'por pierna; mancuernas cuando sea fácil', perSide: true, step: 1, why: W.unilateral }), time('Plancha lateral', 20, 40, { note: 'por lado', perSide: true, why: W.core }) ] }
       ]
     },
     {
@@ -182,14 +205,14 @@ window.GYM_SEED = (function () {
       active: false,
       rirMin: 1, rirMax: 2,
       warmup: 'Cinta 5′ progresiva + círculos de brazos y rotaciones de hombro + 1 serie liviana del primer superset.',
-      notes: 'Jalón y press militar pesados (6-10). Banco inclinado o flexiones y remo con apoyo moderados. El cierre se recorta primero.',
+      notes: 'Jalón pesado (6-10); press militar en 8-12 para cuidar el hombro. Banco inclinado o flexiones y remo con apoyo moderados. El cierre se recorta primero.',
       blocks: [
         { id: 'b1', type: 'circuit', name: 'Superset A', rounds: 3, restBetween: 0, restAfterRound: 90,
-          exercises: [ kg('Jalón dorsal', 6, 10, 6, { unit: 'ladrillos', step: 1 }), kg('Press militar con mancuernas', 6, 10, 7.5, { note: 'c/mano', step: 1 }) ] },
+          exercises: [ kg('Jalón dorsal', 6, 10, 6, { unit: 'ladrillos', step: 1, why: W.pullHeavy }), kg('Press militar con mancuernas', 8, 12, 7.5, { note: 'c/mano', step: 1, why: W.ohp }) ] },
         { id: 'b2', type: 'circuit', name: 'Superset B', rounds: 3, restBetween: 0, restAfterRound: 75,
-          exercises: [ kg('Banco inclinado con mancuernas', 8, 12, 7.5, { note: 'c/mano; o flexiones de brazos', step: 1 }), kg('Remo con apoyo en banco', 8, 12, 10, { note: 'pecho apoyado, o remo sentado en polea', step: 1 }) ] },
+          exercises: [ kg('Banco inclinado con mancuernas', 8, 12, 7.5, { note: 'c/mano; o flexiones de brazos', step: 1, why: W.press }), kg('Remo con apoyo en banco', 8, 12, 10, { note: 'pecho apoyado, o remo sentado en polea', step: 1, why: W.pull }) ] },
         { id: 'b3', type: 'circuit', name: 'Cierre', rounds: 2, restBetween: 0, restAfterRound: 45,
-          exercises: [ kg('Elevaciones laterales', 12, 15, 5, { note: 'c/mano', step: 1 }), kg('Extensión de tríceps en polea', 12, 15, 0, { note: 'o face pull', step: 1 }) ] }
+          exercises: [ kg('Elevaciones laterales', 12, 15, 5, { note: 'c/mano', step: 1, why: W.shoulderIso }), kg('Extensión de tríceps en polea', 12, 15, 0, { note: 'o face pull', step: 1, why: W.arms }) ] }
       ]
     },
     {
@@ -199,12 +222,12 @@ window.GYM_SEED = (function () {
       active: false,
       rirMin: 1, rirMax: 2,
       warmup: 'Cinta 5′ progresiva + 10 buenos días sin peso + 1-2 series de aproximación de peso muerto.',
-      notes: 'Peso muerto rumano pesado primero (5-8 reps, RIR 2, nunca menos de 1). Sentadilla goblet o búlgara moderada. Puente de glúteo + farmer carry para cerrar.',
+      notes: 'Peso muerto rumano pesado primero (6-10 reps, RIR 2 mínimo: la guía lo aplica aunque la fase pida 1-2). Sentadilla goblet o búlgara moderada. Puente de glúteo + farmer carry para cerrar.',
       blocks: [
         { id: 'b1', type: 'straight', name: 'Principal', rounds: 1, restBetween: 0, restAfterRound: 0,
-          exercises: [ kg('Peso muerto rumano', 5, 8, 30, { note: 'barra o mancuernas', sets: 4, rest: 120 }), kg('Sentadilla goblet', 8, 12, 15, { note: 'o sentadilla búlgara por pierna', sets: 3, rest: 90 }) ] },
+          exercises: [ kg('Peso muerto rumano', 6, 10, 30, { note: 'barra o mancuernas', sets: 4, rest: 120, why: W.hingeHeavy, rirMin: 2 }), kg('Sentadilla goblet', 8, 12, 15, { note: 'o sentadilla búlgara por pierna', sets: 3, rest: 90, why: W.legMod, rirMin: 2 }) ] },
         { id: 'b2', type: 'circuit', name: 'Superset', rounds: 2, restBetween: 0, restAfterRound: 60,
-          exercises: [ kg('Puente de glúteo', 10, 15, 10, { note: 'mancuerna sobre la cadera', step: 2.5 }), time('Farmer carry', 30, 40, { note: 'mancuerna en cada mano', unit: 'kg', target: 15, step: 2.5 }) ] }
+          exercises: [ kg('Puente de glúteo', 10, 15, 10, { note: 'mancuerna sobre la cadera', step: 2.5, why: W.glute }), time('Farmer carry', 30, 40, { note: 'mancuerna en cada mano', unit: 'kg', target: 15, step: 2.5, why: W.carry }) ] }
       ]
     }
   ];

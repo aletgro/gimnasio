@@ -1,5 +1,5 @@
 /* Service worker: la app funciona sin internet. Subí VERSION cuando cambies archivos. */
-const VERSION = 'gimnasio-v3';
+const VERSION = 'gimnasio-v4';
 const SHELL = ['./', './index.html', './app.css', './logic.js', './seed.js', './app.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
 

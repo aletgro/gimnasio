@@ -1,0 +1,211 @@
+% Repetition ranges for a high muscular stimulus with low joint load. English report in the style of a research paper
+% (Europe's Journal of Psychology, APA author-year). Compile: pdflatex repetition-ranges.tex (twice).
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[british]{babel}
+\usepackage[margin=2.1cm]{geometry}
+\usepackage[protrusion=true,expansion=false]{microtype}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage[authoryear,round]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\captionsetup{labelfont=bf,textfont=it,labelsep=newline,justification=raggedright,singlelinecheck=false,skip=4pt}
+\setlist{nosep, leftmargin=*}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{4pt}
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{1.2em}
+\newcommand{\rng}[1]{\textbf{#1}}
+\newcommand{\orm}{1RM}
+
+\title{\textbf{Training Hard, Training Safe: Repetition Ranges for a High Muscular Stimulus With Low Joint Load in a Double-Progression Gym Programme}}
+\author{Gimnasio training application\\[2pt] \small Technical report accompanying the double-progression guide}
+\date{11 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent The present report draws on the current literature on training load, proximity to failure and injury epidemiology in resistance training, and derives a set of repetition ranges for a four-phase gym programme whose stated priority is a strong muscular stimulus with a low risk of injury to the shoulder, the lumbar spine and the knee. Overall, it is argued that, for a recreational trainee, the repetition range is best understood not as a lever for hypertrophy, which is largely insensitive to it, but as a lever for joint load. Based on a review of twelve sources and an audit of the nine routines loaded in the application, three rules are proposed. First, compound lower-body lifts are performed for 6 to 10 repetitions on heavy days and 8 to 12 on moderate days, never below 6 and never with fewer than two repetitions in reserve. Second, pressing movements are kept at 8 to 12 repetitions, whereas the main pulling movement of the day may go down to 6 to 10, because the shoulder tolerates load differently in the two positions. Third, single-joint work for the shoulder and the elbow is performed for 12 to 15 repetitions with light loads. Four ranges in the existing routines were found not to satisfy these rules and were revised; the remaining ranges were retained. The way the rules are enforced by the application's double-progression guide is also described.
+\end{abstract}
+
+\noindent\textbf{Keywords:} repetition ranges, double progression, repetitions in reserve, hypertrophy, injury prevention, joint load
+
+\section*{Introduction}
+
+Whether the aim is a stronger back, a leaner physique or simply the sense of being in charge of one's own body, the recreational lifter faces the same question at every set: how many repetitions, and with how much weight. For decades the answer came from the so-called \emph{repetition continuum}, according to which 1 to 5 repetitions with heavy loads build strength, 6 to 12 build muscle and 15 or more build endurance \citep{acsm2009}. The continuum is still printed on gym walls and it is, as a first approximation, not wrong. It does, however, rest on a premise that the evidence of the last decade has considerably weakened, namely that muscle growth requires heavy loads.
+
+A series of systematic reviews and meta-analyses now indicates that muscle hypertrophy is remarkably similar across a wide spectrum of loads, from roughly 30~\% to 85~\% of the one-repetition maximum (\orm), provided that sets are taken close to failure \citep{lopez2021,schoenfeld2017,schoenfeld2021}. What heavy loads do better is maximal strength, which is largely a matter of practising the heavy lift itself. Consequently, one may think that for a person whose goals are muscle, function and health, rather than a powerlifting total, the choice of repetition range can be made on grounds other than the muscular stimulus. The most relevant of those grounds, it is argued here, is the mechanical load imposed on joints and connective tissue, which, unlike hypertrophy, does scale directly with the weight on the bar.
+
+The present report concerns one such person: a trainee returning to the gym after a period of inactivity, who uses a mobile application to follow a four-phase programme guided by \emph{double progression} and a target number of \emph{repetitions in reserve} (RIR). The trainee's request was explicit: repetition ranges that maintain a good stimulus for the muscle while keeping the risk of injury low and protecting the joints. The report first reviews what is known about load, proximity to failure, injury and tendon adaptation; it then describes the programme and the criteria used to assign a range to each exercise; it presents the resulting prescription and the changes made to the existing routines; and it closes with a discussion of the trade-offs involved.
+
+\section*{Literature Review}
+
+\subsection*{Load, Repetitions and Hypertrophy}
+
+\citet{schoenfeld2017} compared low-load (below 60~\% \orm) and high-load (above 60~\% \orm) resistance training in a meta-analysis of 21 studies and found no meaningful difference in muscle hypertrophy, whereas strength gains favoured heavy loads. A later network meta-analysis reached the same conclusion across low, moderate and high loads \citep{lopez2021}. Re-examining the repetition continuum in the light of these data, \citet{schoenfeld2021} argue that hypertrophy can be maximised across a broad range of loads, that loads lighter than about 30~\% \orm{} are less efficient, and that the choice within the effective spectrum can be made on the basis of preference, joint health and time. Approximate correspondences between repetitions and load are useful here: a set of 6 repetitions taken close to failure corresponds to roughly 80 to 85~\% \orm, 10 repetitions to 75~\%, 15 to 65~\%. When two repetitions are held in reserve, as the programme requires, the working loads are lower still, so that a 6-to-10 range is performed at approximately 70 to 80~\% \orm, an 8-to-12 range at 65 to 75~\% and a 12-to-15 range at 60 to 70~\%.
+
+\subsection*{Proximity to Failure}
+
+The second lever is how close to failure each set is taken. \citet{grgic2022} found that training to repetition failure is not necessary for gains in strength or hypertrophy when volume is equated, and \citet{refalo2023} report that hypertrophy appears largely similar whether sets are taken to failure or stopped a few repetitions short, provided that the effort is high. Stopping short has a cost in stimulus that seems small and a benefit in fatigue and technique that seems large: the last repetitions before failure are the ones in which movement quality deteriorates most. The RIR-based rating of perceived exertion described by \citet{helms2016} makes this manageable in practice, since the trainee reports after every set how many repetitions were left, and the programme can be regulated against that report. It is this scale that the application uses.
+
+\subsection*{Injury Epidemiology and Joint Load}
+
+Injury rates in the weight-training sports are, on the whole, low: in the review by Keogh and Winwood \citeyearpar{keogh2017} they range from roughly 0.2 to 1 injuries per 1,000 hours in bodybuilding to 1 to 4 in powerlifting, where the loads are heaviest and the repetitions fewest. Across disciplines the shoulder, the lower back and the knee are the sites most often affected. The shoulder deserves particular attention: \citet{kolber2010} conclude that it accounts for a large share of the injuries attributed to resistance training and that pressing movements performed with the arm in abduction and external rotation, overhead variants in particular, are the most frequently implicated. The mechanics of the other two sites are equally well documented. In the squat, patellofemoral and tibiofemoral compressive forces increase with both the external load and the depth of the movement \citep{escamilla2001}; in heavy lifting from the floor, \citet{cholewicki1991} estimated lumbar compressive loads in competitive powerlifters that scaled with the load lifted and, at maximal attempts, exceeded the tolerance limits established for the lumbar spine in vitro. Neither finding argues against squatting or hinging; both argue against doing so at maximal loads when the goal does not require it.
+
+\subsection*{Connective Tissue Adaptation}
+
+Muscle and tendon do not adapt at the same pace. \citet{magnusson2019} review evidence that the adult tendon core has a very low turnover and that its adaptation to loading, while real, is slower than that of the muscle it serves. For a trainee returning after a layoff this asymmetry matters: within a few weeks the muscle may again be capable of loads that the tendon is not yet prepared for. It follows that the first phase of a programme should favour more repetitions with lighter loads, and that loads should be raised in small steps.
+
+\section*{Methodology}
+
+\subsection*{The Programme}
+
+The material for this report consisted of the nine routines loaded in the application, together with the trainee's stated goals. Phase 1 is a full-body circuit of six exercises performed for three rounds at RIR 3 to 4, intended to re-establish the habit and to readapt tendons and joints. Phase 2 splits the week into a legs-and-core day and an upper-body day at RIR 2 to 3. An alternative full-body A/B pair, for weeks in which three sessions are possible, places a heavy squat or Romanian deadlift first and pairs the remaining movements in supersets. Phase 3 is a four-day upper/lower split at RIR 1 to 2 with a heavy and a moderate day for each half of the body. Sessions last between 27 and 30 minutes and use dumbbells, a barbell, a cable station and a lat pulldown whose load is measured in bricks. Every exercise carries a repetition range, a target load and a rest period; time-based exercises (planks, carries) carry a range in seconds.
+
+\subsection*{Analytical Procedure}
+
+Each of the 44 exercise entries was audited against three criteria: a) the joint position of risk involved, that is, whether the movement loads the shoulder in abduction and external rotation, the lumbar spine in shear or the knee in deep flexion; b) the size and lever arm of the muscles involved, since small muscles working through long levers are exposed to disproportionate tendon stress at heavy loads; and c) the phase in which the exercise appears, since re-entry and established training call for different loads. From these criteria a range was assigned by rule, the rule being that the range should be the heaviest that keeps the position of risk away from maximal loads. Where the existing range already satisfied the rule it was retained; where it did not, the change was recorded. The procedure has its limitations, the absence of an individual injury history being the most significant: the rules are generic and would be adjusted for a trainee with a documented shoulder or lumbar problem.
+
+\subsection*{Implementation in the Application}
+
+The application enforces the prescription through four mechanisms. First, the double-progression guide adds repetitions at a constant load until the top of the range is reached in every set on two consecutive sessions within the target RIR, at which point the load is raised by the smallest available step and the repetitions return to the bottom of the range. A four-repetition range therefore yields several sessions of progress between load increments, and the increments themselves are small (1~kg for dumbbells, 2.5~kg for the barbell). Second, an exercise may carry an RIR floor of its own that overrides the phase target when higher; the squat and the Romanian deadlift carry a floor of 2, so that a set reported at RIR 1 is flagged as harder than intended even in Phase 3, and the floor is announced on the screen that precedes the session. Third, every exercise displays a one-line rationale for its range beneath its name during the session, editable in the routine editor. Fourth, the editor warns, without preventing it, when an exercise is saved with a minimum below six repetitions. On devices already installed, the four revised ranges are updated automatically where the stored value still matched the old one; ranges edited by hand are left untouched.
+
+\section*{Results}
+
+The audit yielded three rules, applied to eleven categories of exercise: a) compound lower-body lifts at 6 to 10 repetitions on heavy days and 8 to 12 otherwise, with an RIR floor of 2; b) pressing at 8 to 12 and the main pull of the day at 6 to 10; and c) single-joint work for the shoulder and the elbow at 12 to 15. In addition, four of the 44 entries were found not to satisfy the rules and were revised.
+
+\subsection*{Ranges by Exercise Category}
+
+Table~\ref{tab:cat} presents the eleven categories, the range assigned to each, the approximate working load and the reasoning. The short version of the rules is that no loaded exercise is performed for fewer than six repetitions, because below that point the load on the joint rises considerably faster than the stimulus to the muscle.
+
+\begin{longtable}{L{4.1cm} L{1.7cm} L{1.9cm} L{7.8cm}}
+\caption{Repetition ranges by exercise category}\label{tab:cat}\\
+\toprule
+\textbf{Category} & \textbf{Range} & \textbf{Load (RIR 2)} & \textbf{Rationale} \\
+\midrule
+\endfirsthead
+\caption[]{Repetition ranges by exercise category (continued)}\\
+\toprule
+\textbf{Category} & \textbf{Range} & \textbf{Load (RIR 2)} & \textbf{Rationale} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\multicolumn{4}{@{}p{16.4cm}@{}}{\footnotesize\textit{Note.} Load is expressed as an approximate percentage of the one-repetition maximum when two repetitions are held in reserve.} \\
+\endlastfoot
+Compound lower body, heavy day (barbell squat, Romanian deadlift) & \rng{6--10} & 70--80~\% & Sufficient for strength and hypertrophy without the peak lumbar compression and shear, or the patellofemoral load, of sets of 1 to 5. Technique holds for the whole set. RIR floor of 2. \\
+Compound lower body, moderate day or re-entry (goblet squat, dumbbell Romanian deadlift) & \rng{8--12} & 65--75~\% & The same stimulus with fewer absolute kilograms; allows recovery between heavy days. \\
+Unilateral lower body (lunges, split squat) & \rng{8--12} per leg & low & External load is small and the knee works in a stable position; progression is by repetitions before kilograms. \\
+Pressing (flat and incline bench, overhead press) & \rng{8--12} & 65--75~\% & The shoulder is the most frequently injured joint in the gym \citep{kolber2010}; 8 to 12 keeps maximal loads away from the abducted, externally rotated position. Chest and deltoid grow just as well. \\
+Pressing at re-entry & \rng{10--15} & 60--70~\% & Readapts shoulder and elbow with light loads during the first weeks. \\
+Main pull of the day (one-arm row, lat pulldown) & \rng{6--10} & 70--80~\% & The shoulder works retracted and stable, without impingement; the latissimus tolerates heavy load and the bench support protects the lumbar spine. \\
+Secondary pulls & \rng{8--12} & 65--75~\% & Protects the elbow (medial epicondylitis) and the biceps tendon without loss of stimulus. \\
+Isolated shoulder (lateral and rear raises, face pull) & \rng{12--15} & 60--70~\% & Small muscles through a long lever with the supraspinatus tendon in play; with heavier loads the trapezius and momentum do the work, not the deltoid. \\
+Arms (curl, cable triceps extension) & \rng{10--15} & 60--70~\% & Elbow tendons; with heavy loads technique degrades (swinging) and no stimulus is gained. \\
+Accessory hip (glute bridge) & \rng{10--15} & moderate & The hip tolerates load well in the mid-range and the spine is not compressed. \\
+Isometric core (plank, side plank) & \rng{20--45~s} & body weight & Progression is by time; the spine stays neutral without repeated flexion under load. \\
+Loaded carry & \rng{30--40~s} & moderate to heavy & Axial load with a braced trunk; kilograms are added only when posture is perfect. \\
+\end{longtable}
+
+\subsection*{Exercise-Level Prescription}
+
+Table~\ref{tab:ex} applies the rules to every exercise in the nine routines. Where the same exercise appears in a heavy and in a moderate slot, it is listed twice.
+
+\begin{longtable}{L{3.0cm} L{3.0cm} L{2.1cm} L{2.1cm} L{5.0cm}}
+\caption{Repetition range, protected structure and rationale for each exercise}\label{tab:ex}\\
+\toprule
+\textbf{Exercise} & \textbf{Routines} & \textbf{Range} & \textbf{Protects} & \textbf{Rationale} \\
+\midrule
+\endfirsthead
+\caption[]{Repetition range, protected structure and rationale for each exercise (continued)}\\
+\toprule
+\textbf{Exercise} & \textbf{Routines} & \textbf{Range} & \textbf{Protects} & \textbf{Rationale} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+Squat (barbell or goblet) & Phase 3 Lower A (4 sets, 120~s rest), Alt.\ A & \rng{6--10}, RIR~$\geq$~2 & lumbar spine, knee & Main compound lift: 70 to 80~\% \orm{} is enough for strength and hypertrophy; warm-up sets at 50 and 75~\% precede it. \\
+Squat & Phase 1, Phase 2 Day 1 & \rng{8--12} & lumbar spine, knee & Re-entry and moderate day: fewer absolute kilograms while tendons and joints readapt. \\
+Goblet squat (or split squat) & Phase 3 Lower B & \rng{8--12} & knee & Second leg exercise of the day: moderate load, the front-held dumbbell keeps the trunk upright. \\
+Romanian deadlift & Phase 3 Lower B (4 sets, 120~s rest), Alt.\ B & \rng{6--10}, RIR~$\geq$~2 & lumbar spine, hamstrings & Main hinge: below 6 repetitions the load and the lumbar shear rise much faster than the stimulus \citep{cholewicki1991}. \\
+Romanian deadlift & Phase 1, Phase 2 Day 1, Phase 3 Lower A & \rng{8--12} & lumbar spine, hamstrings & Moderate day or re-entry: contained lumbar load; the hamstrings respond very well to this range. \\
+Lunges / reverse lunge & Phase 2 Day 1, Phase 3 Lower A & \rng{8--12} per leg & knee & Small external load, stable knee; body weight first, dumbbells once 12 come easily. \\
+Dumbbell flat bench press & Phase 1, Phase 2 Day 2 & \rng{10--15} & shoulder, elbow & Re-entry of the press with light loads. \\
+Dumbbell flat bench press & Alt.\ A, Phase 3 Upper A & \rng{8--12} & shoulder & Dumbbells allow a natural shoulder path; 8 to 12 keeps maximal loads away from the most vulnerable position. \\
+Dumbbell incline press (or push-ups) & Phase 3 Upper B & \rng{8--12} & shoulder & As the flat press; the incline brings the arm closer to the position of risk, hence no fewer than 8. \\
+Dumbbell overhead press & Phase 2 Day 2, Alt.\ B, Phase 3 Upper A and B & \rng{8--12} & shoulder (subacromial space) & Pressing overhead is the movement most often implicated in shoulder injury \citep{kolber2010}; never below 8. \\
+Lat pulldown & Phase 3 Upper B (main) & \rng{6--10} & shoulder, elbow & Main pull: retracted, stable shoulder; the latissimus tolerates heavy load. No jerking or leaning back. \\
+Lat pulldown & Phase 2 Day 2, Alt.\ A, Phase 3 Upper A & \rng{8--12} & elbow & Secondary pull: protects elbow and biceps tendon. \\
+One-arm row & Phase 3 Upper A (main) & \rng{6--10} & lumbar spine (supported) & With hand and knee on the bench the lumbar spine is protected; heavy loading is acceptable. \\
+One-arm row & Phase 1, Phase 2 Day 2, Alt.\ B & \rng{8--12} & elbow & Full stimulus for the latissimus and upper back at moderate load. \\
+Chest-supported row & Phase 3 Upper B & \rng{8--12} & lumbar spine, elbow & Chest on the bench: no lumbar load; 8 to 12 protects the elbow. \\
+Lateral raise & Phase 1, Phase 2 Day 2, Phase 3 Upper B & \rng{12--15} & supra\-spinatus & Long lever on a small tendon; light weight and control. \\
+Face pull (or rear raise) & Phase 3 Upper A & \rng{12--15} & rotator cuff & Shoulder health rather than strength: light load, elbows high, pause at the back. \\
+Biceps curl & Phase 2 Day 2, Phase 3 Upper A & \rng{10--15} & elbow & Distal biceps tendon and epicondyle: light and without swinging. \\
+Cable triceps extension & Phase 3 Upper B & \rng{12--15} & elbow & As the curl: the elbow gains nothing from heavy load. \\
+Glute bridge & Phase 3 Lower B & \rng{10--15} & hip & Very safe; dumbbell on the hips, pause at the top. \\
+Plank / side plank & Phase 1, Phase 2 Day 1 / Alt.\ A, Phase 3 Lower A & \rng{20--45~s} / \rng{20--40~s} per side & spine & Isometric: progression by seconds; neutral spine without added compression. \\
+Farmer's carry & Alt.\ B, Phase 3 Lower B & \rng{30--40~s} & spine, grip & Axial load with a braced trunk; kilograms only when 40~s are completed with perfect posture. \\
+\end{longtable}
+
+\subsection*{Changes to the Existing Routines}
+
+Four entries did not satisfy the rules (Table~\ref{tab:changes}). The two heavy lower-body lifts of Phase 3 were programmed for 5 to 8 repetitions and were moved to 6 to 10; the difference in strength stimulus between the two ranges is minimal, whereas the difference in load on the spine and the knee is not. The two heavy presses of Phase 3, programmed for 6 to 10, were moved to 8 to 12 because the shoulder is the joint most often injured in the gym and the pectoral and deltoid grow just as well at the lighter load. The two main pulls of Phase 3 retained their 6-to-10 range, since the shoulder works retracted and stable in a pull and the latissimus tolerates heavy load. Finally, every squat and Romanian deadlift entry received an RIR floor of 2. All other ranges already conformed and were left unchanged.
+
+\begin{longtable}{L{3.5cm} L{4.5cm} L{2.6cm} L{4.7cm}}
+\caption{Ranges revised in the existing routines}\label{tab:changes}\\
+\toprule
+\textbf{Routine} & \textbf{Exercise} & \textbf{Before} & \textbf{After} \\
+\midrule
+\endfirsthead
+\bottomrule
+\endlastfoot
+Phase 3 · Lower A & Squat & 5--8 & \rng{6--10}, RIR floor 2 \\
+Phase 3 · Lower B & Romanian deadlift & 5--8 & \rng{6--10}, RIR floor 2 \\
+Phase 3 · Upper A & Dumbbell flat bench press & 6--10 & \rng{8--12} \\
+Phase 3 · Upper B & Dumbbell overhead press & 6--10 & \rng{8--12} \\
+Phase 2 Day 1, Alt.\ A and B, Phase 3 Lower A and B & Squat, goblet squat and Romanian deadlift & phase RIR (1--2 in Phase 3) & RIR floor of \rng{2}, even where the phase asks for 1--2 \\
+\end{longtable}
+
+\section*{Discussion}
+
+According to the results of this audit, the repetition range can be said to be, for this trainee, first and foremost a joint-load lever rather than a hypertrophy lever. All the reviewed evidence points the same way: the muscle is indifferent, within broad limits, to whether it is asked for 6 or 12 repetitions, whereas the shoulder, the lumbar spine and the knee are not \citep{escamilla2001,kolber2010,schoenfeld2021}. Hence, one may argue that the sensible default for a recreational lifter is the heaviest range that keeps the position of risk away from maximal loads, and that the classical 8-to-12 zone of the position stand \citep{acsm2009} earns its place not because it is uniquely anabolic but because it happens to sit in that region.
+
+The asymmetry between pushing and pulling deserves comment, since a reader may find it odd that the row is allowed a heavier range than the bench press. The justification is anatomical rather than muscular. In a press the humerus is abducted and externally rotated under load, the position in which the subacromial space is narrowest and the rotator cuff most exposed \citep{kolber2010}; in a row or a pulldown the scapula is retracted, the humerus travels close to the trunk and the joint is at its most congruent. The latissimus, moreover, is one of the largest muscles of the body and the bench or the seat removes the lumbar spine from the equation. It seems reasonable, therefore, to let the pull carry the heavier work of an upper-body day and to keep the press moderate.
+
+The RIR floor of 2 on the squat and the Romanian deadlift is the second decision that departs from the phase design, which asks for RIR 1 to 2 in Phase 3. This resonates with the findings on proximity to failure: the last repetition before failure buys very little stimulus \citep{grgic2022,refalo2023} and it is precisely the repetition in which lumbar position and knee tracking are most likely to give way. On single-joint exercises the same argument does not apply with equal force, and the occasional set to RIR 0 or 1 on lateral raises or curls is accepted.
+
+It should be acknowledged that the prescription has a cost. Maximal strength is best developed with heavy loads \citep{lopez2021,schoenfeld2017}, and a trainee who never goes below six repetitions will express somewhat less of it than one who does. Some lifters, moreover, find the heavy single or triple the most rewarding part of training. For the trainee in question, who asked for a low risk of injury and the protection of the joints, the trade seems clearly favourable; for another it might not be. Nor should the six-repetition floor be read as a guarantee: \citet{escamilla2001} show that patellofemoral force rises with depth as well as with load, and a 6-to-10 range performed with a collapsing knee is no safer than a heavy triple performed well. Technique, warm-up sets and small load increments remain the first line of defence.
+
+\section*{Conclusion}
+
+This report has shown that a repetition prescription can be derived from the evidence for a trainee whose stated priorities are stimulus and joint safety, and that the two are far less in conflict than the repetition continuum would suggest. Firstly, compound lower-body lifts are performed for 6 to 10 repetitions on heavy days and 8 to 12 on moderate days, never below 6, with an RIR floor of 2. Second, presses are kept at 8 to 12 repetitions, or 10 to 15 at re-entry, while the main pull of the day may go to 6 to 10. Third, single-joint work for the shoulder and the elbow is performed for 12 to 15 repetitions with light loads, and core and carries progress by time. It can therefore be said that the trainee gives up little more than the heaviest sets, and gains a programme in which every set is performed with the joint furthest from its position of risk that the exercise allows.
+
+Important to note, the prescription is limited for it was derived for a single trainee without a documented injury history and without measurement of individual joint tolerance. It would be interesting to revisit the ranges after two or three months of logged sessions, since the application records load, repetitions and RIR for every set and the data would show whether progression stalls in any range, whether the RIR floor is being respected and whether any exercise is repeatedly reported as harder than intended. It would also be worthwhile to add the deload weeks and the warm-up sets to the guide itself, so that the same logic that governs the working sets governs the sets around them. Relatedly, a trainee with a known shoulder or lumbar problem would require a narrower prescription than the one presented here, and this report does not replace the assessment of a health professional in that case.
+
+\begin{thebibliography}{99}\small
+\bibitem[{American College of Sports Medicine}(2009)]{acsm2009} American College of Sports Medicine. (2009). Progression models in resistance training for healthy adults. \emph{Medicine \& Science in Sports \& Exercise, 41}(3), 687--708. \url{https://doi.org/10.1249/MSS.0b013e3181915670}
+\bibitem[{Cholewicki et al.}(1991)]{cholewicki1991} Cholewicki, J., McGill, S. M., \& Norman, R. W. (1991). Lumbar spine loads during the lifting of extremely heavy weights. \emph{Medicine \& Science in Sports \& Exercise, 23}(10), 1179--1186. \url{https://doi.org/10.1249/00005768-199110000-00012}
+\bibitem[{Escamilla}(2001)]{escamilla2001} Escamilla, R. F. (2001). Knee biomechanics of the dynamic squat exercise. \emph{Medicine \& Science in Sports \& Exercise, 33}(1), 127--141. \url{https://doi.org/10.1097/00005768-200101000-00020}
+\bibitem[{Grgic et al.}(2022)]{grgic2022} Grgic, J., Schoenfeld, B. J., Orazem, J., \& Sabol, F. (2022). Effects of resistance training performed to repetition failure or non-failure on muscular strength and hypertrophy: A systematic review and meta-analysis. \emph{Journal of Sport and Health Science, 11}(2), 202--211. \url{https://doi.org/10.1016/j.jshs.2021.01.007}
+\bibitem[{Helms et al.}(2016)]{helms2016} Helms, E. R., Cronin, J., Storey, A., \& Zourdos, M. C. (2016). Application of the repetitions in reserve-based rating of perceived exertion scale for resistance training. \emph{Strength and Conditioning Journal, 38}(4), 42--49. \url{https://doi.org/10.1519/SSC.0000000000000218}
+\bibitem[{Keogh \& Winwood}(2017)]{keogh2017} Keogh, J. W. L., \& Winwood, P. W. (2017). The epidemiology of injuries across the weight-training sports. \emph{Sports Medicine, 47}(3), 479--501. \url{https://doi.org/10.1007/s40279-016-0575-0}
+\bibitem[{Kolber et al.}(2010)]{kolber2010} Kolber, M. J., Beekhuizen, K. S., Cheng, M.-S. S., \& Hellman, M. A. (2010). Shoulder injuries attributed to resistance training: A brief review. \emph{Journal of Strength and Conditioning Research, 24}(6), 1696--1704. \url{https://doi.org/10.1519/JSC.0b013e3181dc4330}
+\bibitem[{Lopez et al.}(2021)]{lopez2021} Lopez, P., Radaelli, R., Taaffe, D. R., Newton, R. U., Galvão, D. A., Trajano, G. S., Teodoro, J. L., Kraemer, W. J., Häkkinen, K., \& Pinto, R. S. (2021). Resistance training load effects on muscle hypertrophy and strength gain: Systematic review and network meta-analysis. \emph{Medicine \& Science in Sports \& Exercise, 53}(6), 1206--1216. \url{https://doi.org/10.1249/MSS.0000000000002585}
+\bibitem[{Magnusson \& Kjaer}(2019)]{magnusson2019} Magnusson, S. P., \& Kjaer, M. (2019). The impact of loading, unloading, ageing and injury on the human tendon. \emph{The Journal of Physiology, 597}(5), 1283--1298. \url{https://doi.org/10.1113/JP275450}
+\bibitem[{Refalo et al.}(2023)]{refalo2023} Refalo, M. C., Helms, E. R., Trexler, E. T., Hamilton, D. L., \& Fyfe, J. J. (2023). Influence of resistance training proximity-to-failure on skeletal muscle hypertrophy: A systematic review with meta-analysis. \emph{Sports Medicine, 53}(3), 649--665. \url{https://doi.org/10.1007/s40279-022-01784-y}
+\bibitem[{Schoenfeld et al.}(2017)]{schoenfeld2017} Schoenfeld, B. J., Grgic, J., Ogborn, D., \& Krieger, J. W. (2017). Strength and hypertrophy adaptations between low- vs. high-load resistance training: A systematic review and meta-analysis. \emph{Journal of Strength and Conditioning Research, 31}(12), 3508--3523. \url{https://doi.org/10.1519/JSC.0000000000002200}
+\bibitem[{Schoenfeld et al.}(2021)]{schoenfeld2021} Schoenfeld, B. J., Grgic, J., Van Every, D. W., \& Plotkin, D. L. (2021). Loading recommendations for muscle strength, hypertrophy, and local endurance: A re-examination of the repetition continuum. \emph{Sports, 9}(2), 32. \url{https://doi.org/10.3390/sports9020032}
+\end{thebibliography}
+
+\end{document}

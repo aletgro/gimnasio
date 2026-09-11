@@ -9,7 +9,7 @@
 
   /* ================= Estado y persistencia ================= */
   function defaults() {
-    return { version: 1, routines: [], sessions: [], settings: { sound: true, vibrate: true, wakeLock: true, voice: false, theme: 'system', lastRoutineId: null } };
+    return { version: 2, routines: [], sessions: [], settings: { sound: true, vibrate: true, wakeLock: true, voice: false, theme: 'system', lastRoutineId: null } };
   }
   function load() {
     try {
@@ -18,7 +18,7 @@
         const d = JSON.parse(raw);
         const base = defaults();
         const out = Object.assign(base, d, { settings: Object.assign(base.settings, d.settings || {}) });
-        if (migrateRoutines(out.routines)) persist(out);
+        if (migrate(out)) persist(out);
         return out;
       }
     } catch (e) { /* datos corruptos: se ignoran */ }
@@ -37,6 +37,12 @@
       const s = seed.find(x => x.id === r.id);
       r.rirMin = s ? s.rirMin : 2; r.rirMax = s ? s.rirMax : 3; changed = true;
     });
+    return changed;
+  }
+  /* Datos versión 2: rangos más cuidadosos con las articulaciones, motivo del rango y piso de RIR por ejercicio (ver applyRangeUpdates en logic.js). */
+  function migrate(d) {
+    let changed = migrateRoutines(d.routines);
+    if (!(d.version >= 2)) { L.applyRangeUpdates(d.routines, window.GYM_SEED().routines); d.version = 2; changed = true; }
     return changed;
   }
   function persist(d) { try { localStorage.setItem(KEY, JSON.stringify(d || data)); } catch (e) { toast('No se pudo guardar (almacenamiento lleno o bloqueado)'); } }
@@ -255,7 +261,8 @@
     if (!obj || !Array.isArray(obj.routines) || !Array.isArray(obj.sessions)) { toast('El JSON no tiene rutinas y sesiones'); return; }
     confirmModal('Importar datos', 'Se reemplazan ' + data.routines.length + ' rutinas y ' + data.sessions.length + ' sesiones por ' + obj.routines.length + ' y ' + obj.sessions.length + '.', 'Importar', () => {
       const base = defaults();
-      data = Object.assign(base, { routines: obj.routines, sessions: obj.sessions, settings: Object.assign(base.settings, obj.settings || {}) });
+      data = Object.assign(base, { version: obj.version || 1, routines: obj.routines, sessions: obj.sessions, settings: Object.assign(base.settings, obj.settings || {}) });
+      migrate(data);
       persist(); applyTheme(); closeModal(); render(); toast('Datos importados');
     });
   }
@@ -271,10 +278,16 @@
         '<div class="actions" style="margin-top:8px"><button class="btn sm" data-act="startRoutine" data-id="' + esc(r.id) + '">Empezar</button><button class="btn sm" data-act="editRoutine" data-id="' + esc(r.id) + '">Editar</button>' +
         '<button class="btn sm ' + (r.active ? 'primary' : '') + '" data-act="toggleActive" data-id="' + esc(r.id) + '" aria-pressed="' + (r.active ? 'true' : 'false') + '">' + (r.active ? 'Activa' : 'Inactiva') + '</button></div></div></div>';
     }).join('') + '</div>';
+    html += '<div class="card flat guide"><div class="eyebrow">Guía de rangos · estímulo alto, articulaciones cuidadas</div>' +
+      [['Compuesto de pierna, día pesado (sentadilla, peso muerto)', '6-10 · RIR 2 mín.'], ['Compuesto de pierna, día moderado o reenganche', '8-12'], ['Unilateral de pierna (estocadas, búlgara)', '8-12 / pierna'],
+       ['Empujes (banco, inclinado, press militar)', '8-12'], ['Empujes en reenganche', '10-15'], ['Tracción principal del día (remo, jalón)', '6-10'], ['Tracciones', '8-12'],
+       ['Hombro aislado (laterales, face pull)', '12-15'], ['Brazos (curl, tríceps)', '10-15'], ['Puente de glúteo', '10-15'], ['Core isométrico y carry', '20-45″']]
+        .map(([k, v]) => '<div class="kv"><span>' + k + '</span><b>' + v + '</b></div>').join('') +
+      '<p class="small muted">Nunca menos de 6 reps con carga: por debajo, la carga sobre columna, rodillas y hombros sube mucho más que el estímulo. Cada ejercicio muestra su motivo en la sesión. Detalle y referencias en docs/rangos-de-repeticiones.pdf.</p></div>';
     return html + '</div>';
   }
 
-  function blankExercise() { return { name: '', note: '', mode: 'reps', min: 8, max: 12, unit: 'kg', step: 2.5, perSide: false, target: 0, sets: 3, rest: 90 }; }
+  function blankExercise() { return { name: '', note: '', why: '', mode: 'reps', min: 8, max: 12, unit: 'kg', step: 2.5, perSide: false, target: 0, sets: 3, rest: 90, rirMin: null }; }
   function blankBlock() { return { id: L.uid('b'), type: 'circuit', name: 'Circuito', rounds: 3, restBetween: 45, restAfterRound: 90, exercises: [blankExercise()] }; }
   function move(arr, i, dir) { const j = i + dir; if (j < 0 || j >= arr.length) return; const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
   function numOr(v, def) { const n = num(v); return n == null ? def : n; }
@@ -303,8 +316,10 @@
           '<button class="iconbtn" data-act="moveEx" data-bi="' + bi + '" data-ei="' + ei + '" data-dir="-1" aria-label="Subir">' + ICONS.up + '</button><button class="iconbtn" data-act="moveEx" data-bi="' + bi + '" data-ei="' + ei + '" data-dir="1" aria-label="Bajar">' + ICONS.down + '</button><button class="iconbtn" data-act="delEx" data-bi="' + bi + '" data-ei="' + ei + '" aria-label="Eliminar">' + ICONS.x + '</button></div>' +
           fld('Detalle (ej.: «barra», «c/mano»)', inp(q + 'note', ex.note)) +
           '<div class="grid3">' + fld('Medida', sel(q + 'mode', ex.mode, [['reps', 'Reps'], ['time', 'Segundos']])) + fld('Mín.', inp(q + 'min', ex.min, 'number')) + fld('Máx.', inp(q + 'max', ex.max, 'number')) + '</div>' +
+          fld('Por qué este rango (se muestra en la sesión)', inp(q + 'why', ex.why, 'text', 'placeholder="Ej.: compuesto pesado, 6-10 con RIR 2 mínimo"')) +
           '<div class="grid3">' + fld('Carga', sel(q + 'unit', ex.unit, [['kg', 'kg'], ['ladrillos', 'Ladrillos'], ['none', 'Sin carga']])) + fld('Objetivo', inp(q + 'target', ex.target, 'number')) + fld('Salto +/−', inp(q + 'step', ex.step, 'number')) + '</div>' +
           (b.type === 'straight' ? '<div class="grid2">' + fld('Series', inp(q + 'sets', ex.sets, 'number')) + fld('Descanso (s)', inp(q + 'rest', ex.rest, 'number')) + '</div>' : '') +
+          fld('RIR mínimo propio (opcional · sentadilla y peso muerto: 2)', inp(q + 'rirMin', ex.rirMin, 'number', 'min="0" max="4" placeholder="el de la rutina"')) +
           '<label class="check"><input type="checkbox" data-bind="' + q + 'perSide" ' + (ex.perSide ? 'checked' : '') + '> Por lado (unilateral)</label></div>';
       });
       html += '<button class="btn sm" data-act="addEx" data-bi="' + bi + '">+ Ejercicio</button></div>';
@@ -325,6 +340,7 @@
     r.name = String(r.name || '').trim();
     if (!r.name) { toast('Poné un nombre a la rutina'); return; }
     r.rirMin = Math.min(4, Math.max(0, Math.round(numOr(r.rirMin, 2)))); r.rirMax = Math.min(4, Math.max(r.rirMin, Math.round(numOr(r.rirMax, r.rirMin))));
+    const heavy = [];
     r.blocks.forEach(b => {
       b.name = String(b.name || '').trim() || (b.type === 'circuit' ? 'Circuito' : 'Series');
       b.rounds = Math.max(1, Math.round(numOr(b.rounds, 1)));
@@ -336,13 +352,18 @@
         e.min = Math.max(0, numOr(e.min, 8)); e.max = Math.max(e.min, numOr(e.max, e.min));
         e.target = Math.max(0, numOr(e.target, 0)); e.step = Math.max(0, numOr(e.step, e.unit === 'ladrillos' ? 1 : 2.5));
         e.sets = Math.max(1, Math.round(numOr(e.sets, 3))); e.rest = Math.max(0, numOr(e.rest, 60)); e.perSide = !!e.perSide;
+        e.why = String(e.why || '').trim();
+        const floor = num(e.rirMin); e.rirMin = floor == null ? null : Math.min(4, Math.max(0, Math.round(floor)));
+        if (e.mode === 'reps' && e.min < 6) heavy.push(e.name);
       });
     });
     r.blocks = r.blocks.filter(b => b.exercises.length);
     if (!r.blocks.length) { toast('Agregá al menos un ejercicio con nombre'); return; }
     const i = data.routines.findIndex(x => x.id === r.id);
     if (i >= 0) data.routines[i] = r; else data.routines.push(r);
-    persist(); ui.editor = null; ui.view = null; ui.tab = 'routines'; render(); toast('Rutina guardada');
+    persist(); ui.editor = null; ui.view = null; ui.tab = 'routines'; render();
+    if (heavy.length) toast('Rutina guardada. Ojo: ' + heavy.join(', ') + ' por debajo de 6 reps carga mucho las articulaciones (ver guía de rangos).', 4500);
+    else toast('Rutina guardada');
   }
 
   /* ================= Sesión en curso ================= */
@@ -370,6 +391,8 @@
   function currentStep() { return live.queue[live.idx]; }
   function stepExercise(step) { return live.routine.blocks[step.block].exercises[step.ex]; }
   function loadStep(ex) { return ex.step || (ex.unit === 'ladrillos' ? 1 : 2.5); }
+  /* RIR objetivo de un ejercicio en la sesión: el de la fase, salvo que el ejercicio tenga un piso propio más alto (sentadilla, peso muerto). */
+  function rirFor(ex) { return L.exerciseTarget(live.rir, ex); }
   function ensureDraft() {
     if (live.draft && live.draft.stepIndex === live.idx) return live.draft;
     const step = currentStep(); const ex = stepExercise(step);
@@ -415,8 +438,10 @@
     if (r.warmup) html += '<div class="card"><div class="eyebrow">Calentamiento</div><p class="warm">' + esc(r.warmup) + '</p></div>';
     if (r.notes) html += '<div class="card flat"><div class="eyebrow">Notas</div><p class="warm">' + esc(r.notes) + '</p></div>';
     const rr = live.rir;
+    const floors = []; r.blocks.forEach(b => b.exercises.forEach(e => { if (e.rirMin != null && e.rirMin > rr.min && !floors.some(f => f.name === e.name)) floors.push(e); }));
     html += '<div class="card"><div class="eyebrow">Exigencia de hoy</div><p><b>' + esc(L.rirLabel(rr)) + '</b> · terminá cada serie pudiendo hacer ' + (rr.min === rr.max ? rr.min : rr.min + ' a ' + rr.max) + ' reps más, con técnica limpia. La guía evalúa cada serie contra esto.</p>' +
-      (rr.absence ? '<p class="small warn-text">Volvés después de ' + rr.absence + ' días: hoy todo a RIR 3, sin buscar récords (la fase pide ' + esc(L.rirLabel({ min: r.rirMin, max: r.rirMax })) + '). Vale solo para esta sesión.</p>' : '') + '</div>';
+      (rr.absence ? '<p class="small warn-text">Volvés después de ' + rr.absence + ' días: hoy todo a RIR 3, sin buscar récords (la fase pide ' + esc(L.rirLabel({ min: r.rirMin, max: r.rirMax })) + '). Vale solo para esta sesión.</p>' : '') +
+      (floors.length ? '<p class="small muted">Piso propio para cuidar columna y rodillas: ' + floors.map(e => '<b>' + esc(e.name) + '</b> nunca por debajo de RIR ' + e.rirMin).join(' · ') + '. La guía evalúa esas series contra ese piso.</p>' : '') + '</div>';
     html += '<div class="card"><div class="eyebrow">Hoy</div><div class="blocks">' + r.blocks.map((b, bi) =>
       '<div class="block-row"><div class="grow"><b>' + esc(b.name) + '</b><div class="small muted">' + esc(b.exercises.map(e => e.name).join(' · ')) + '</div></div>' +
       (b.type === 'circuit' ? '<div class="mini-stepper"><button data-act="rounds" data-bi="' + bi + '" data-d="-1" aria-label="Menos vueltas">−</button><b>' + live.rounds[bi] + '</b><button data-act="rounds" data-bi="' + bi + '" data-d="1" aria-label="Más vueltas">+</button></div>' : '') + '</div>').join('') +
@@ -429,7 +454,8 @@
     const hist = L.exerciseHistory(data.sessions, step.key, { limit: 3 });
     const todaySets = live.sets.filter(s => s.key === step.key && s.stepIndex !== live.idx).sort((a, b) => a.stepIndex - b.stepIndex);
     const nth = live.sets.filter(s => s.key === step.key && s.stepIndex < live.idx).length;
-    const plan = L.exercisePlan(ex, live.rir, hist);
+    const rir = rirFor(ex);
+    const plan = L.exercisePlan(ex, rir, hist);
     const targetReps = L.setTarget(plan, nth);
     const ref = L.refSet(hist[0], nth);
     const block = live.routine.blocks[step.block];
@@ -437,9 +463,10 @@
     if (live.lastEval) html += '<div class="eval ' + live.lastEval.kind + '"><span class="eyebrow">Serie anterior · ' + esc(live.lastEval.title) + '</span><div>' + esc(live.lastEval.text) + '</div></div>';
     html += '<div><div class="ex-block">' + esc(block.name) + ' · ' + esc(whereLabel(step)) + '</div><h2 class="ex-name">' + esc(ex.name) + '</h2>' +
       '<div class="ex-meta">' + (ex.note ? '<span>' + esc(ex.note) + '</span>' : '') + '<span>' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + '</span>' +
-      (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter && live.idx < live.queue.length - 1 ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div></div>';
-    const goal = (ex.unit !== 'none' && plan.load != null ? L.fmtLoad(plan.load, ex.unit) + (targetReps != null ? ' × ' : ' · ') : '') + (targetReps != null ? (ex.mode === 'time' ? targetReps + '″' : targetReps) : 'hasta ' + L.rirLabel(live.rir));
-    html += '<div class="card plan ' + plan.kind + '"><div class="card-head"><span class="eyebrow">Objetivo · serie ' + (nth + 1) + ' · ' + esc(L.rirLabel(live.rir)) + '</span>' +
+      (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter && live.idx < live.queue.length - 1 ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div>' +
+      (ex.why ? '<p class="ex-why">' + esc(ex.why) + '</p>' : '') + '</div>';
+    const goal = (ex.unit !== 'none' && plan.load != null ? L.fmtLoad(plan.load, ex.unit) + (targetReps != null ? ' × ' : ' · ') : '') + (targetReps != null ? (ex.mode === 'time' ? targetReps + '″' : targetReps) : 'hasta ' + L.rirLabel(rir));
+    html += '<div class="card plan ' + plan.kind + '"><div class="card-head"><span class="eyebrow">Objetivo · serie ' + (nth + 1) + ' · ' + esc(L.rirLabel(rir)) + (rir.floor ? ' (piso propio)' : '') + '</span>' +
       (ref ? '<span class="small muted">última vez ' + esc(L.fmtSet(ref)) + (ref.rir != null ? ' · RIR ' + ref.rir : '') + '</span>' : '') + '</div>' +
       '<div class="plan-goal">' + esc(goal) + '</div><p class="plan-text">' + esc(plan.text) + '</p>';
     html += '<div class="last"><span class="eyebrow">Última vez' + (hist[0] ? ' · ' + esc(L.relDate(hist[0].date, today())) : '') + '</span>';
@@ -457,7 +484,7 @@
       html += '<div class="field"><label>' + (ex.mode === 'time' ? 'Segundos' : 'Reps') + (ex.perSide ? ' (por lado)' : '') + '</label><div class="stepper"><button data-act="step" data-f="reps" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" step="1" min="0" data-draft="reps" value="' + (d.reps == null ? '' : d.reps) + '" placeholder="' + ex.min + '-' + ex.max + '"><button data-act="step" data-f="reps" data-d="1" aria-label="Más">+</button></div>' +
         (ex.mode === 'time' ? '<button class="btn sm" data-act="countdown">▶ Iniciar cuenta regresiva</button>' : '') + '</div>';
     }
-    html += '<div class="field"><label>¿Cómo se sintió? · objetivo ' + esc(L.rirLabel(live.rir)) + '</label><div class="feels">' + L.FEELS.map(f => feelBtn(f, d.rir === f.rir, 'feel', L.effort(f.rir, live.rir) === 'ok')).join('') + '</div></div>';
+    html += '<div class="field"><label>¿Cómo se sintió? · objetivo ' + esc(L.rirLabel(rir)) + '</label><div class="feels">' + L.FEELS.map(f => feelBtn(f, d.rir === f.rir, 'feel', L.effort(f.rir, rir) === 'ok')).join('') + '</div></div>';
     html += '</div>';
     html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="saveSet">Guardar serie</button>' +
       '<div class="grid2"><button class="btn sm" data-act="prevStep"' + (live.idx === 0 ? ' disabled' : '') + '>‹ Anterior</button><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Hacer después ↷</button>' +
@@ -474,13 +501,13 @@
     const groups = groupSets(live.sets);
     let html = '<div class="session">' + sessionBar('Resumen') + '<div><div class="eyebrow">Sesión terminada</div><h2 class="title-lg">' + esc(live.routineName) + '</h2>' +
       '<p class="muted">' + L.fmtDuration(Date.now() - new Date(live.startedAt)) + ' · ' + live.sets.length + ' series' + (live.skipped.length ? ' · ' + live.skipped.length + ' saltadas' : '') + '</p></div>';
-    const effs = live.sets.map(s => L.effort(s.rir, live.rir));
+    const exByKey = key => { let found = null; live.routine.blocks.forEach(b => b.exercises.forEach(e => { if (!found && L.slug(e.name) === key) found = e; })); return found; };
+    const effs = live.sets.map(s => L.effort(s.rir, rirFor(exByKey(s.key))));
     const cnt = k => effs.filter(e => e === k).length;
     if (live.sets.length) html += '<div class="card flat"><div class="eyebrow">Exigencia · objetivo ' + esc(L.rirLabel(live.rir)) + '</div><div class="small">' +
       cnt('ok') + ' series en objetivo · ' + cnt('hard') + ' más al límite · ' + cnt('easy') + ' con margen de sobra' + (cnt(null) ? ' · ' + cnt(null) + ' sin sensación' : '') + '</div></div>';
-    const exByKey = key => { let found = null; live.routine.blocks.forEach(b => b.exercises.forEach(e => { if (!found && L.slug(e.name) === key) found = e; })); return found; };
     html += '<div class="card">' + (groups.length ? groups.map(g => {
-      const ex = exByKey(g.key); const v = ex ? L.exerciseVerdict(ex, live.rir, g.sets, L.exerciseHistory(data.sessions, g.key, { limit: 2 })) : null;
+      const ex = exByKey(g.key); const v = ex ? L.exerciseVerdict(ex, rirFor(ex), g.sets, L.exerciseHistory(data.sessions, g.key, { limit: 2 })) : null;
       return '<div class="summary-ex"><div class="nm">' + esc(g.name) + '</div><div class="sets">' + g.sets.map(s => setChip(s)).join('') + '</div>' +
         (v ? '<div class="small muted">' + esc(v.text) + '</div><div class="small verdict ' + v.next.kind + '">Próxima: ' + esc(v.next.short) + '</div>' : '') + '</div>';
     }).join('') : '<p class="muted">No registraste series.</p>') + '</div>';
@@ -503,7 +530,8 @@
       stepIndex: live.idx, load: ex.unit === 'none' ? null : d.load, reps: d.reps, rir: d.rir, t: new Date().toISOString() };
     const hist = L.exerciseHistory(data.sessions, step.key, { limit: 2 });
     const nth = live.sets.filter(s => s.key === step.key && s.stepIndex < live.idx).length;
-    const ev = L.evaluateSet(ex, live.rir, set, L.refSet(hist[0], nth), L.setTarget(L.exercisePlan(ex, live.rir, hist), nth));
+    const rir = rirFor(ex);
+    const ev = L.evaluateSet(ex, rir, set, L.refSet(hist[0], nth), L.setTarget(L.exercisePlan(ex, rir, hist), nth));
     live.lastEval = { title: ex.name + ' · ' + L.fmtSet(set), kind: ev.kind, text: ev.text };
     const i = live.sets.findIndex(s => s.stepIndex === live.idx);
     if (i >= 0) live.sets[i] = set; else live.sets.push(set);
@@ -745,7 +773,11 @@
       if (f && f.files && f.files[0]) { const r = new FileReader(); r.onload = () => importData(r.result); r.readAsText(f.files[0]); }
       else importData(t ? t.value : '');
     },
-    restoreSeed: () => { const seed = window.GYM_SEED(); let n = 0; seed.routines.forEach(r => { if (!byId(data.routines, r.id)) { data.routines.push(r); n++; } }); persist(); render(); toast(n ? n + ' rutina(s) restaurada(s)' : 'Ya estaban todas'); },
+    restoreSeed: () => confirmModal('Restaurar rutinas de ejemplo', 'Las rutinas de ejemplo que ya tenés se reemplazan por la versión actual (rangos, motivos, notas y pisos de RIR); se conserva si estaban activas. Las rutinas que creaste vos y las sesiones no se tocan.', 'Restaurar', () => {
+      const seed = window.GYM_SEED(); let added = 0, updated = 0;
+      seed.routines.forEach(r => { const i = data.routines.findIndex(x => x.id === r.id); if (i >= 0) { r.active = data.routines[i].active; data.routines[i] = r; updated++; } else { data.routines.push(r); added++; } });
+      persist(); closeModal(); render(); toast(updated + ' actualizada(s) · ' + added + ' agregada(s)', 2600);
+    }),
     wipe: () => confirmModal('Borrar todo', 'Se borran rutinas, sesiones y preferencias de este teléfono. Exportá antes si querés conservar algo.', 'Borrar todo', () => {
       localStorage.removeItem(KEY); localStorage.removeItem(LIVE); live = null; ui.inSession = false; data = load(); applyTheme(); closeModal(); render(); toast('Datos borrados; rutinas de ejemplo restauradas');
     }, true),
