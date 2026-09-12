@@ -48,7 +48,7 @@ Cuando cambies archivos ya publicados, subí `VERSION` en `sw.js` para que los t
 
 ## Datos
 
-Se guardan en `localStorage` bajo la clave `gimnasio.v1` (rutinas, sesiones, preferencias) y `gimnasio.live` (sesión en curso). Exportá desde **Datos → Copiar JSON / Descargar** cada tanto: si borrás los datos de Chrome, se pierde lo guardado.
+Se guardan en `localStorage` bajo la clave `gimnasio.v1` (rutinas, sesiones, preferencias) y `gimnasio.live` (sesión en curso). Exportá desde **Datos → Copiar JSON / Descargar / Compartir** cada tanto: si borrás los datos de Chrome, se pierde lo guardado. **Compartir** manda el JSON como archivo `gimnasio-<fecha>.json.txt` (Chrome no deja compartir archivos `.json`, pero sí de texto); al importar se acepta igual que un `.json`.
 
 Cada ejercicio de una rutina guarda `min`/`max` (rango), `why` (motivo del rango, texto libre) y `rirMin` (piso de RIR propio, o `null` para usar el de la rutina). La versión de datos es 2; al cargar datos de la versión 1 se aplican los rangos nuevos donde no hubo edición manual.
 

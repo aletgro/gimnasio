@@ -251,7 +251,7 @@
       (ui.showExport ? '<textarea class="input export" readonly>' + esc(exportJSON()) + '</textarea>' : '') + '</div>';
     html += '<div class="card"><div class="eyebrow">Importar</div><p class="small muted">Pegá un JSON exportado por esta app o elegí el archivo. Reemplaza todo lo actual.</p>' +
       '<textarea class="input export" id="importText" placeholder="{ &quot;app&quot;: &quot;gimnasio&quot;, … }"></textarea>' +
-      '<input type="file" id="importFile" accept="application/json,.json" class="input">' +
+      '<input type="file" id="importFile" accept="application/json,.json,text/plain,.txt" class="input">' +
       '<button class="btn" data-act="importData">Importar</button></div>';
     html += '<div class="card flat"><div class="eyebrow">Mantenimiento</div>' +
       '<div class="kv"><span>Rutinas</span><b>' + data.routines.length + '</b></div><div class="kv"><span>Sesiones</span><b>' + data.sessions.length + '</b></div><div class="kv"><span>Tamaño de los datos</span><b>' + (Math.round(size / 102.4) / 10) + ' KB</b></div>' +
@@ -789,13 +789,21 @@
       const blob = new Blob([exportJSON()], { type: 'application/json' }); const a = document.createElement('a');
       a.href = URL.createObjectURL(blob); a.download = 'gimnasio-' + today() + '.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
     },
+    /* Compartir la copia como archivo .txt (text/plain): Chrome no permite compartir .json/application/json (lista cerrada de tipos)
+       pero canShare igual devuelve true, y share() rechaza con NotAllowedError; antes ese rechazo caía en un catch vacío y el botón parecía no hacer nada.
+       Ahora cualquier fallo se avisa con un toast, salvo que el usuario cierre el menú de compartir (AbortError). */
     shareExport: () => {
-      const name = 'gimnasio-' + today() + '.json';
+      const json = exportJSON();
+      const title = 'Gimnasio · copia de seguridad';
+      const fail = e => { if (e && e.name === 'AbortError') return; toast('No se pudo compartir' + (e && e.message ? ' (' + e.message + ')' : '') + '. Probá con «Descargar».', 3600); };
+      let p;
       try {
-        const file = new File([exportJSON()], name, { type: 'application/json' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: 'Gimnasio' }).catch(() => {});
-        else navigator.share({ title: 'Gimnasio', text: exportJSON() }).catch(() => {});
-      } catch (e) { toast('Este navegador no puede compartir archivos'); }
+        const file = new File([json], 'gimnasio-' + today() + '.json.txt', { type: 'text/plain' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) p = navigator.share({ files: [file], title });
+        else if (json.length <= 100000) p = navigator.share({ title, text: json });
+        else { toast('El JSON es muy grande para compartirlo como texto: usá «Descargar»', 3200); return; }
+      } catch (e) { fail(e); return; }
+      if (p && p.then) p.then(null, fail);
     },
     toggleExport: () => { ui.showExport = !ui.showExport; render(); },
     importData: () => {
