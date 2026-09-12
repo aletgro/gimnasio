@@ -86,6 +86,13 @@
   const feelChip = rir => { const f = L.feel(rir); return f ? '<span class="dot ' + f.cls + '" title="' + esc(f.label) + '"></span>' : ''; };
   const feelText = rir => { const f = L.feel(rir); return f ? f.label : 'sin sensación'; };
   const feelBtn = (f, on, act, target) => '<button class="feel ' + f.cls + (on ? ' on' : '') + (target ? ' target' : '') + '" data-act="' + act + '" data-rir="' + f.rir + '" title="' + esc(f.hint) + '"><span class="lbl">' + f.label + '</span><span class="rir">RIR ' + (f.rir === 4 ? '4+' : f.rir) + '</span></button>';
+  /* Series de una sesión en una línea: «22,5 kg × 8 · 7 · 6» si la carga no cambia, si no cada una completa. */
+  function fmtSetsCompact(sets) {
+    if (!sets.length) return '';
+    const l = L.fmtLoad(sets[0].load, sets[0].unit);
+    const same = l && sets.every(s => s.load === sets[0].load && s.unit === sets[0].unit && s.reps != null);
+    return same ? l + ' × ' + sets.map(s => L.fmtReps(s)).join(' · ') : sets.map(s => L.fmtSet(s)).join(' · ');
+  }
   function setChip(set, extraCls) {
     return '<span class="setchip ' + (extraCls || '') + '">' + esc(L.fmtSet(set)) + (set.perSide ? '<span class="muted small">/lado</span>' : '') + feelChip(set.rir) + '</span>';
   }
@@ -449,6 +456,9 @@
     html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="beginExercises">Empezar los ejercicios</button></div>';
     return html + '</div>';
   }
+  /* Pantalla del ejercicio: pensada para entrar entera en un teléfono de ~6,5″ (360-412 × 740-900 px CSS) sin scroll.
+     Alto fijo a la pantalla; si igual no entra (nombres largos, muchas series), solo se desplaza el medio y los botones quedan siempre a la vista.
+     Los textos largos (por qué del rango, guía, evaluación) se pliegan a dos líneas y se abren con un toque. */
   function renderExercise() {
     const step = currentStep(); const ex = stepExercise(step); const d = ensureDraft();
     const hist = L.exerciseHistory(data.sessions, step.key, { limit: 3 });
@@ -459,42 +469,49 @@
     const targetReps = L.setTarget(plan, nth);
     const ref = L.refSet(hist[0], nth);
     const block = live.routine.blocks[step.block];
-    let html = '<div class="session">' + sessionBar('Serie ' + (live.idx + 1) + ' de ' + live.queue.length) + progressBar() + (live.rest ? restBar() : '');
-    if (live.lastEval) html += '<div class="eval ' + live.lastEval.kind + '"><span class="eyebrow">Serie anterior · ' + esc(live.lastEval.title) + '</span><div>' + esc(live.lastEval.text) + '</div></div>';
-    html += '<div><div class="ex-block">' + esc(block.name) + ' · ' + esc(whereLabel(step)) + '</div><h2 class="ex-name">' + esc(ex.name) + '</h2>' +
-      '<div class="ex-meta">' + (ex.note ? '<span>' + esc(ex.note) + '</span>' : '') + '<span>' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + '</span>' +
+    let html = '<div class="session fit">' + sessionBar('Serie ' + (live.idx + 1) + ' de ' + live.queue.length) + progressBar() + (live.rest ? restBar() : '');
+    if (live.lastEval) {
+      const ev = live.lastEval;
+      const title = ev.short ? (ev.key === step.key ? 'Serie anterior' : ev.name) + ' · ' + ev.short : ev.title;
+      html += '<div class="eval ' + ev.kind + '" data-act="toggleClamp"><div class="clamp three"><b>' + esc(title) + ':</b> ' + esc(ev.text) + '</div></div>';
+    }
+    html += '<div class="ex-main">';
+    html += '<div class="ex-head"><div class="ex-block">' + esc(block.name) + ' · ' + esc(whereLabel(step)) + '</div><h2 class="ex-name' + (ex.name.length > 22 ? ' long' : '') + '">' + esc(ex.name) + '</h2>' +
+      '<div class="ex-meta"><b>' + esc(L.rangeLabel(ex)) + (ex.perSide ? ' por lado' : '') + '</b>' + (ex.note && !(ex.perSide && /^por (lado|pierna)$/i.test(ex.note.trim())) ? '<span>' + esc(ex.note) + '</span>' : '') +
       (ex.unit !== 'none' && ex.target ? '<span>objetivo ' + esc(L.fmtLoad(ex.target, ex.unit)) + '</span>' : '') + (step.restAfter && live.idx < live.queue.length - 1 ? '<span>descanso ' + step.restAfter + '″</span>' : '') + '</div>' +
-      (ex.why ? '<p class="ex-why">' + esc(ex.why) + '</p>' : '') + '</div>';
+      (ex.why ? '<p class="ex-why clamp" data-act="toggleClamp">' + esc(ex.why) + '</p>' : '') + '</div>';
     const goal = (ex.unit !== 'none' && plan.load != null ? L.fmtLoad(plan.load, ex.unit) + (targetReps != null ? ' × ' : ' · ') : '') + (targetReps != null ? (ex.mode === 'time' ? targetReps + '″' : targetReps) : 'hasta ' + L.rirLabel(rir));
-    html += '<div class="card plan ' + plan.kind + '"><div class="card-head"><span class="eyebrow">Objetivo · serie ' + (nth + 1) + ' · ' + esc(L.rirLabel(rir)) + (rir.floor ? ' (piso propio)' : '') + '</span>' +
-      (ref ? '<span class="small muted">última vez ' + esc(L.fmtSet(ref)) + (ref.rir != null ? ' · RIR ' + ref.rir : '') + '</span>' : '') + '</div>' +
-      '<div class="plan-goal">' + esc(goal) + '</div><p class="plan-text">' + esc(plan.text) + '</p>';
-    html += '<div class="last"><span class="eyebrow">Última vez' + (hist[0] ? ' · ' + esc(L.relDate(hist[0].date, today())) : '') + '</span>';
-    if (hist[0]) html += '<div class="sets">' + hist[0].sets.map(s => setChip(s)).join('') + '</div>';
-    else html += '<p class="small muted">Primera vez que registrás este ejercicio.</p>';
-    if (hist[1]) html += '<div class="small muted">Antes, ' + esc(L.relDate(hist[1].date, today())) + ': ' + hist[1].sets.map(s => esc(L.fmtSet(s))).join(' · ') + '</div>';
+    html += '<div class="card plan ' + plan.kind + '"><div class="eyebrow">Objetivo · serie ' + (nth + 1) + ' · ' + esc(L.rirLabel(rir)) + (rir.floor ? ' (piso propio)' : '') + '</div>' +
+      '<div class="plan-goal">' + esc(goal) + '</div><p class="plan-text clamp" data-act="toggleClamp">' + esc(plan.text) + '</p>';
+    /* Historial en filas de una línea: etiqueta a la izquierda, series a la derecha. La serie de referencia (la misma serie la última vez) va resaltada. */
+    html += '<div class="hist"><div class="hrow"><span class="eyebrow">Última vez' + (hist[0] ? '<small>' + esc(L.relDate(hist[0].date, today())) + '</small>' : '') + '</span>' +
+      (hist[0] ? hist[0].sets.map(s => setChip(s, s === ref ? 'ref' : '')).join('') : '<span class="small muted">primera vez que registrás este ejercicio</span>') + '</div>';
+    if (hist[1]) html += '<div class="hrow"><span class="eyebrow">Antes</span><span class="small muted">' + esc(L.relDate(hist[1].date, today())) + ': ' + esc(fmtSetsCompact(hist[1].sets)) + '</span></div>';
+    if (todaySets.length) html += '<div class="hrow"><span class="eyebrow">Hoy</span>' + todaySets.map(s => setChip(s, 'today')).join('') + '</div>';
     html += '</div></div>';
-    if (todaySets.length) html += '<div class="last"><span class="eyebrow">Hoy</span><div class="sets">' + todaySets.map(s => setChip(s, 'today')).join('') + '</div></div>';
-    html += '<div class="card">';
-    if (ex.unit !== 'none') html += '<div class="field"><label>' + (ex.unit === 'ladrillos' ? 'Ladrillos' : 'Peso (kg)') + '</label><div class="stepper"><button data-act="step" data-f="load" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="decimal" step="any" min="0" data-draft="load" value="' + (d.load == null ? '' : d.load) + '" placeholder="' + (ex.target || '') + '"><button data-act="step" data-f="load" data-d="1" aria-label="Más">+</button></div></div>';
+    /* Controles: peso y reps lado a lado; en los ejercicios por tiempo, la cuenta regresiva ocupa el lugar libre. */
+    const fields = [];
+    if (ex.unit !== 'none') fields.push('<div class="field"><label>' + (ex.unit === 'ladrillos' ? 'Ladrillos' : 'Peso (kg)') + '</label><div class="stepper"><button data-act="step" data-f="load" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="decimal" step="any" min="0" data-draft="load" value="' + (d.load == null ? '' : d.load) + '" placeholder="' + (ex.target || '') + '"><button data-act="step" data-f="load" data-d="1" aria-label="Más">+</button></div></div>');
     if (ex.mode === 'time' && live.sw) {
       const remaining = live.sw.total - (Date.now() - live.sw.startAt) / 1000;
-      html += '<div class="field"><label>Cuenta regresiva · ' + live.sw.total + '″</label><div class="sw"><div class="count' + (remaining <= 5 ? ' soon' : '') + '" id="swcount">' + L.fmtSecs(remaining) + '</div><button class="btn" data-act="countdown">■ Parar</button></div></div>';
+      fields.push('<div class="field"><label>Cuenta regresiva · ' + live.sw.total + '″</label><div class="sw"><div class="count' + (remaining <= 5 ? ' soon' : '') + '" id="swcount">' + L.fmtSecs(remaining) + '</div><button class="btn" data-act="countdown">■ Parar</button></div></div>');
     } else {
-      html += '<div class="field"><label>' + (ex.mode === 'time' ? 'Segundos' : 'Reps') + (ex.perSide ? ' (por lado)' : '') + '</label><div class="stepper"><button data-act="step" data-f="reps" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" step="1" min="0" data-draft="reps" value="' + (d.reps == null ? '' : d.reps) + '" placeholder="' + ex.min + '-' + ex.max + '"><button data-act="step" data-f="reps" data-d="1" aria-label="Más">+</button></div>' +
-        (ex.mode === 'time' ? '<button class="btn sm" data-act="countdown">▶ Iniciar cuenta regresiva</button>' : '') + '</div>';
+      const startBtn = ex.mode === 'time' && ex.unit !== 'none' ? '<button class="btn xs" data-act="countdown">▶ Iniciar</button>' : '';
+      fields.push('<div class="field"><div class="field-head"><label>' + (ex.mode === 'time' ? 'Segundos' : 'Reps') + (ex.perSide ? ' (por lado)' : '') + '</label>' + startBtn + '</div><div class="stepper"><button data-act="step" data-f="reps" data-d="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" step="1" min="0" data-draft="reps" value="' + (d.reps == null ? '' : d.reps) + '" placeholder="' + ex.min + '-' + ex.max + '"><button data-act="step" data-f="reps" data-d="1" aria-label="Más">+</button></div></div>');
+      if (ex.mode === 'time' && fields.length === 1) fields.push('<div class="field"><label>Cuenta regresiva</label><button class="btn ctl" data-act="countdown">▶ Iniciar</button></div>');
     }
+    html += '<div class="card input"><div class="ctl-grid n' + fields.length + '">' + fields.join('') + '</div>';
     html += '<div class="field"><label>¿Cómo se sintió? · objetivo ' + esc(L.rirLabel(rir)) + '</label><div class="feels">' + L.FEELS.map(f => feelBtn(f, d.rir === f.rir, 'feel', L.effort(f.rir, rir) === 'ok')).join('') + '</div></div>';
-    html += '</div>';
-    html += '<div class="spacer"></div><div class="stick"><button class="btn primary big" data-act="saveSet">Guardar serie</button>' +
-      '<div class="grid2"><button class="btn sm" data-act="prevStep"' + (live.idx === 0 ? ' disabled' : '') + '>‹ Anterior</button><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Hacer después ↷</button>' +
+    html += '</div></div>';
+    html += '<div class="stick"><button class="btn primary big" data-act="saveSet">Guardar serie</button>' +
+      '<div class="grid4"><button class="btn sm" data-act="prevStep"' + (live.idx === 0 ? ' disabled' : '') + '>‹ Anterior</button><button class="btn sm" data-act="postponeStep" title="Hacer el que sigue y volver a este">Después ↷</button>' +
       '<button class="btn sm" data-act="skipStep">Saltar</button><button class="btn sm ghost" data-act="finishEarly">Terminar</button></div></div>';
     return html + '</div>';
   }
-  /* Barra de descanso: va arriba de la pantalla del ejercicio siguiente, así no hay que pasar por una pantalla aparte. */
+  /* Barra de descanso: una sola línea arriba de la pantalla del ejercicio siguiente, así no hay que pasar por una pantalla aparte. */
   function restBar() {
     const remaining = (live.rest.endAt - Date.now()) / 1000;
-    return '<div class="restbar" id="restbar"><div class="grow"><div class="eyebrow">Descanso</div><div class="count' + (remaining <= 5 ? ' soon' : '') + '" id="count">' + L.fmtSecs(remaining) + '</div></div>' +
+    return '<div class="restbar" id="restbar"><span class="eyebrow">Descanso</span><span class="count' + (remaining <= 5 ? ' soon' : '') + '" id="count">' + L.fmtSecs(remaining) + '</span>' +
       '<div class="restbar-actions"><button class="btn sm" data-act="restAdd" data-s="-15">−15″</button><button class="btn sm" data-act="restAdd" data-s="15">+15″</button><button class="btn sm" data-act="restSkip">Omitir</button></div></div>';
   }
   function renderSummary() {
@@ -532,7 +549,7 @@
     const nth = live.sets.filter(s => s.key === step.key && s.stepIndex < live.idx).length;
     const rir = rirFor(ex);
     const ev = L.evaluateSet(ex, rir, set, L.refSet(hist[0], nth), L.setTarget(L.exercisePlan(ex, rir, hist), nth));
-    live.lastEval = { title: ex.name + ' · ' + L.fmtSet(set), kind: ev.kind, text: ev.text };
+    live.lastEval = { title: ex.name + ' · ' + L.fmtSet(set), key: step.key, name: ex.name, short: L.fmtSet(set), kind: ev.kind, text: ev.text };
     const i = live.sets.findIndex(s => s.stepIndex === live.idx);
     if (i >= 0) live.sets[i] = set; else live.sets.push(set);
     live.skipped = live.skipped.filter(x => x !== live.idx);
@@ -615,8 +632,19 @@
   /* ---- Temporizadores, sonido, vibración, voz, pantalla ---- */
   let timers = [];
   function stopTimers() { timers.forEach(clearInterval); timers = []; }
+  /* Si sobra lugar en la pantalla del ejercicio, los textos plegados se abren solos (guía, evaluación, por qué), en ese orden, mientras sigan entrando sin scroll. */
+  function fitClamps() {
+    const main = document.querySelector('.fit .ex-main'); if (!main) return;
+    const fits = () => main.scrollHeight <= main.clientHeight + 1;
+    if (!fits()) return;
+    ['.plan-text.clamp', '.eval .clamp', '.ex-why.clamp'].forEach(sel => {
+      const el = document.querySelector(sel); if (!el || el.classList.contains('open')) return;
+      el.classList.add('open'); if (!fits()) el.classList.remove('open');
+    });
+  }
   function afterSessionRender() {
     if (data.settings.wakeLock && live.phase !== 'summary') requestWakeLock();
+    if (live.phase === 'exercise') fitClamps();
     timers.push(setInterval(() => { const c = document.getElementById('clock'); if (c && live) c.textContent = L.fmtSecs((Date.now() - new Date(live.startedAt)) / 1000); }, 1000));
     if (live.phase === 'exercise' && live.rest) {
       timers.push(setInterval(tickRest, 250));
@@ -710,6 +738,8 @@
     backToExercises: () => { live.phase = 'exercise'; if (live.idx >= live.queue.length) live.idx = live.queue.length - 1; live.draft = null; persistLive(); render(); },
     restAdd: d => { if (!live.rest) return; live.rest.endAt += (+d.s) * 1000; live.rest.fired = false; persistLive(); tickRest(); },
     restSkip: endRest,
+    /* Textos plegados a dos líneas en la pantalla del ejercicio: un toque los abre o los vuelve a plegar. */
+    toggleClamp: (d, el) => { const t = el.classList.contains('clamp') ? el : el.querySelector('.clamp'); if (t) t.classList.toggle('open'); },
     countdown: toggleCountdown,
     saveSession: saveSession,
     /* rutinas */

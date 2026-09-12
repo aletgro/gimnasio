@@ -260,3 +260,89 @@ button.setchip:active { opacity: .8; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 @media (min-width: 600px) { .ex-name { font-size: 38px; } }
+
+/* ---- Pantalla del ejercicio compacta: entra entera en un teléfono de ~6,5″ (360-412 × 740-900 px) sin scroll ----
+   Alto fijo a la pantalla; si igual no entra (nombre largo, muchas series), se desplaza solo el medio (.ex-main) y los botones quedan a la vista. */
+.session.fit { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; gap: 6px; padding: 6px 14px calc(8px + env(safe-area-inset-bottom)); }
+.fit > * { flex: none; }
+.fit .ex-main { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 6px; margin: 0 -14px; padding: 0 14px; }
+.fit .session-bar { min-height: 28px; }
+.fit .session-bar .btn.sm { min-height: 28px; padding: 4px 8px; }
+.fit .restbar { gap: 8px; padding: 5px 10px; border-radius: var(--r-s); }
+.fit .restbar .count { font-size: 20px; margin: 0; flex: 1; }
+.fit .restbar-actions .btn.sm { min-height: 28px; padding: 4px 8px; font-size: 12px; }
+.fit .eval { padding: 6px 10px; font-size: 12.5px; line-height: 1.35; cursor: pointer; }
+.fit .eval b { font-weight: 600; color: inherit; }
+.fit .ex-head { display: flex; flex-direction: column; gap: 3px; }
+.fit .ex-block { margin: 0; font-size: 10.5px; }
+.fit .ex-name { font-size: 24px; line-height: 1.1; }
+.fit .ex-name.long { font-size: 21px; }
+.fit .ex-meta { display: block; margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-2); }
+.fit .ex-meta b { color: var(--text); font-weight: 600; }
+.fit .ex-meta span { background: none; border: 0; padding: 0; font-weight: 400; }
+.fit .ex-meta span::before { content: ' · '; color: var(--text-3); }
+.fit .ex-why { margin: 1px 0 0; font-size: 12px; line-height: 1.4; }
+.fit .card { padding: 8px 10px; gap: 6px; }
+.fit .card.input { margin-top: auto; }
+.fit .plan { gap: 3px; }
+.fit .plan-goal { font-size: 24px; margin-top: 1px; }
+.fit .plan-text { font-size: 12.5px; line-height: 1.35; }
+.fit .hist { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line); padding-top: 6px; margin-top: 3px; }
+.fit .hrow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 5px; min-height: 22px; }
+.fit .hrow .eyebrow { flex: none; min-width: 72px; margin-right: 3px; font-size: 10px; line-height: 1.2; }
+.fit .hrow .eyebrow small { display: block; text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 10.5px; color: var(--text-3); margin-top: 1px; }
+.fit .hrow .small { font-size: 11.5px; line-height: 1.3; }
+.fit .setchip { padding: 2px 6px; gap: 4px; font-size: 11.5px; }
+.fit .setchip .dot { width: 7px; height: 7px; }
+.fit .setchip.ref { border-color: var(--text-2); }
+.fit .field { gap: 3px; }
+.fit .field label { font-size: 10px; }
+.fit .field-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 14px; }
+.fit .btn.xs { min-height: 22px; padding: 1px 8px; font-size: 11px; border-radius: var(--r-xs); margin: -4px 0; }
+.fit .ctl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fit .ctl-grid.n1 { grid-template-columns: 1fr; }
+.fit .stepper { grid-template-columns: 44px 1fr 44px; gap: 4px; }
+.fit .stepper button { min-height: 48px; font-size: 22px; border-radius: var(--r-s); }
+.fit .stepper input { font-size: 24px; padding: 4px 2px; border-radius: var(--r-s); }
+.fit .btn.ctl { min-height: 48px; width: 100%; font-size: 14px; }
+.fit .sw { min-height: 48px; padding: 4px 4px 4px 12px; gap: 8px; }
+.fit .sw .count { font-size: 26px; }
+.fit .sw .btn { min-height: 38px; padding: 6px 12px; font-size: 14px; }
+.fit .feels { gap: 4px; }
+.fit .feel { min-height: 46px; padding: 8px 2px 5px; gap: 2px; }
+.fit .feel .lbl { font-size: 11px; }
+.fit .feel .rir { font-size: 9.5px; }
+.fit .stick { position: static; padding-top: 2px; box-shadow: none; gap: 6px; }
+.fit .btn.big { min-height: 50px; font-size: 15px; }
+.fit .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.fit .grid4 .btn.sm { min-height: 34px; padding: 4px 4px; font-size: 12px; white-space: nowrap; min-width: 0; }
+/* Textos plegados a dos líneas; un toque los abre (data-act="toggleClamp"). */
+.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; cursor: pointer; }
+.clamp.three { -webkit-line-clamp: 3; }
+.clamp.open { display: block; -webkit-line-clamp: unset; }
+/* Pantallas más bajas (o con la barra del navegador a la vista): un poco más apretado. */
+@media (max-height: 760px) {
+  .session.fit { gap: 4px; padding-top: 4px; }
+  .fit .ex-main { gap: 4px; }
+  .fit .ex-name { font-size: 22px; }
+  .fit .plan-goal { font-size: 22px; }
+  .fit .card { padding: 6px 10px; }
+  .fit .stepper button, .fit .btn.ctl, .fit .sw { min-height: 44px; }
+  .fit .feel { min-height: 42px; padding: 7px 2px 4px; }
+  .fit .btn.big { min-height: 46px; }
+  .fit .grid4 .btn.sm { min-height: 32px; }
+}
+/* Pantallas altas: se aprovecha el espacio con controles más grandes. */
+@media (min-height: 880px) {
+  .session.fit { gap: 10px; padding-top: 10px; }
+  .fit .ex-main { gap: 10px; }
+  .fit .ex-name { font-size: 28px; }
+  .fit .plan-goal { font-size: 28px; }
+  .fit .card { padding: 12px; gap: 8px; }
+  .fit .stepper { grid-template-columns: 52px 1fr 52px; gap: 6px; }
+  .fit .stepper button, .fit .btn.ctl, .fit .sw { min-height: 54px; }
+  .fit .stepper input { font-size: 28px; }
+  .fit .feel { min-height: 54px; padding: 10px 2px 7px; }
+  .fit .btn.big { min-height: 54px; }
+  .fit .grid4 .btn.sm { min-height: 36px; }
+}
